@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('soal_ujians', function (Blueprint $table) {
+        Schema::create('sesi_ujians', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('mapel_id')->constrained('mapels')->onDelete('cascade');
             $table->foreignId('bank_soal_id')->constrained('bank_soals')->onDelete('cascade');
-            $table->longText('text_soal');
-            $table->string('tipe_soal');
+            $table->integer('durasi')->default(120);
+            $table->string('token', 6)->unique();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('soal_ujians');
+        Schema::dropIfExists('sesi_ujians');
     }
 };

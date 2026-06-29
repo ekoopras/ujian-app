@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Ujian;
 
 use App\Filament\Resources\Ujian\BankSoalResource\Pages;
+use App\Filament\Resources\Ujian\BankSoalResource\Pages\KelolaSoal;
 use App\Filament\Resources\Ujian\BankSoalResource\RelationManagers;
 use App\Models\BankSoal;
 use Filament\Forms;
@@ -97,7 +98,8 @@ class BankSoalResource extends Resource
                     ->label('Add Soal')
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
-                    ->url(fn(\App\Models\BankSoal $record): string => static::getUrl('kelola-soal', ['record' => $record])),
+                    ->url(fn(BankSoal $record): string => static::getUrl('kelola-soal', ['record' => $record])),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -118,8 +120,9 @@ class BankSoalResource extends Resource
         return [
             'index' => Pages\ListBankSoals::route('/'),
             //'create' => Pages\CreateBankSoal::route('/create'),
-            //'edit' => Pages\EditBankSoal::route('/{record}/edit'),
-            'kelola-soal' => Pages\SoalUjian::route('/{record}/kelola-soal'),
+            'edit' => Pages\EditBankSoal::route('/{record}/edit'),
+            'kelola-soal' => KelolaSoal::route('/{record}/kelola-soal'),
+
         ];
     }
 }

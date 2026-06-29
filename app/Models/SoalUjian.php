@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SoalUjian extends Model
 {
-    protected $fillable = ['bank_soal_id', 'text_soal', 'gambar_soal', 'tipe_soal'];
+    protected $fillable = [
+        'bank_soal_id',
+        'text_soal',
+        'tipe_soal'
+    ];
 
     public function bankSoal(): BelongsTo
     {

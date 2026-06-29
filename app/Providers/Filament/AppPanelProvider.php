@@ -2,8 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\CustomLogin;
+use App\Filament\App\Pages\Auth\CustomLogin;
+use App\Filament\App\Pages\DaftarUjian;
+use App\Filament\App\Pages\ReviewUjian;
 use App\Http\Middleware\CheckRole;
+use App\Livewire\App\DashboardSiswa;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -20,28 +23,27 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class UjianAppPanelProvider extends PanelProvider
+class AppPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('ujian-app')
-            ->path('ujian-app')
+            ->id('app')
+            ->path('app')
             ->login(CustomLogin::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->sidebarWidth('10 rem')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
+            ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                //Pages\Dashboard::class,
+                DaftarUjian::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                //Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -56,7 +58,7 @@ class UjianAppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                CheckRole::class . ':admin',
+                CheckRole::class . ':siswa',
             ]);
     }
 }
