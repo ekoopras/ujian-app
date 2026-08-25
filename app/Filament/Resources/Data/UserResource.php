@@ -17,6 +17,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
 
 class UserResource extends Resource
 {
@@ -24,7 +26,6 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Data Guru';
-    protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
     {
@@ -32,41 +33,33 @@ class UserResource extends Resource
             ->schema([
                 Card::make()
                     ->schema([
-                        TextInput::make('name')
-                            ->required()
-                            ->maxLength(255)
-                            ->label('Nama'),
+                        Forms\Components\TextInput::make('name')
+                            ->required(),
 
-                        TextInput::make('username')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->label('Username'),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required(),
 
-                        TextInput::make('password')
+                        Forms\Components\TextInput::make('password')
                             ->password()
-                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
                             ->dehydrated(fn($state) => filled($state))
-                            ->required(fn(string $context): bool => $context === 'create')
-                            ->maxLength(255)
-                            ->label('Password'),
+                            ->required(fn(string $context) => $context === 'create'),
 
-                        Select::make('role')
-                            ->label('Role')
-                            ->options([
-                                'admin' => 'Admin',
-                                'guru' => 'Guru',
-                            ])
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-
-                        Select::make('mapels')
-                            ->relationship('mapels', 'name')
+                        Forms\Components\Select::make('mapel')
+                            ->label('Mapel')
+                            ->relationship('mapel', 'name')
                             ->multiple()
                             ->preload()
-                            ->searchable()
-                            ->required()
-                            ->label('Mengampu Mata Pelajaran'),
+                            ->searchable(),
+
+                        Forms\Components\Select::make('role')
+                            ->options([
+                                'super_admin' => 'Super Admin',
+                                'guru' => 'Guru',
+                                'pengawas' => 'Pengawas',
+                            ])
+                            ->required(),
                     ])->columns(2)
             ]);
     }
@@ -75,26 +68,23 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Nama'),
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No')
+                    ->rowIndex(),
 
-                TextColumn::make('username')
-                    ->searchable()
-                    ->sortable()
-                    ->label('User Name'),
+                Tables\Columns\TextColumn::make('name')
+                    ->formatStateUsing(fn($state) => Str::title($state))
+                    ->searchable(),
 
-                TextColumn::make('role')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Role'),
+                Tables\Columns\TextColumn::make('email'),
 
-                TextColumn::make('mapels.name')
-                    ->searchable()
-                    ->sortable()
+                Tables\Columns\TextColumn::make('mapel.name')
+                    ->label('Mapel')
                     ->badge()
-                    ->label('Mapel'),
+                    ->color('success')
+                    ->formatStateUsing(fn($state) => Str::title($state)),
+
+                Tables\Columns\TextColumn::make('role'),
             ])
             ->filters([
                 //
@@ -120,14 +110,20 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            //'create' => Pages\CreateUser::route('/create'),
+            //'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    //hanya admin
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->isSuperAdmin(); // hanya super admin
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->whereIn('role', ['admin', 'guru']);
+            ->where('role', '!=', 'siswa');
     }
 }

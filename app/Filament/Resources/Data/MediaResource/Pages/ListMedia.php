@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\Data\SiswaResource\Pages;
+namespace App\Filament\Resources\Data\MediaResource\Pages;
 
-use App\Filament\Resources\Data\SiswaResource;
+use App\Filament\Resources\Data\MediaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListSiswas extends ListRecords
+class ListMedia extends ListRecords
 {
-    protected static string $resource = SiswaResource::class;
+    protected static string $resource = MediaResource::class;
 
     protected function getHeaderActions(): array
     {

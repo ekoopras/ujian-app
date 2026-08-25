@@ -22,23 +22,50 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 
 class AppPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+
+        // Panggil CDN Tailwind v3 khusus di panel /app
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_END,
+            fn(): string => '
+                <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+                <script>
+                    tailwind.config = {
+                        darkMode: "class",
+                        theme: {
+                            extend: {
+                                colors: {
+                                    primary: {
+                                        50: "#eff6ff", 100: "#dbeafe", 200: "#bfdbfe", 300: "#93c5fd",
+                                        400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8",
+                                        800: "#1e40af", 900: "#1e3a8a", 950: "#172554"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                </script>
+            '
+        );
+
         return $panel
             ->id('app')
             ->path('app')
-            ->login(CustomLogin::class)
+            ->login()
+            ->topNavigation()
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
-                //Pages\Dashboard::class,
-                DaftarUjian::class,
+                Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
@@ -58,7 +85,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                CheckRole::class . ':siswa',
+                CheckRole::class . ':app',
             ]);
     }
 }

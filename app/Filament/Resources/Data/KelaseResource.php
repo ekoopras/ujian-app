@@ -24,7 +24,7 @@ class KelaseResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationLabel = 'Data Kelas';
-    protected static ?string $navigationGroup = 'Master Data';
+    // protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
     {
@@ -78,5 +78,11 @@ class KelaseResource extends Resource
             //'create' => Pages\CreateKelase::route('/create'),
             //'edit' => Pages\EditKelase::route('/{record}/edit'),
         ];
+    }
+
+    //hanya admin
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->isSuperAdmin(); // hanya super admin
     }
 }

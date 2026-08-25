@@ -9,11 +9,20 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string $panel): Response
     {
-        // Jika user belum login atau role-nya TIDAK sesuai dengan yang diminta, blokir!
-        if (!Auth::check() || Auth::user()->role !== $role) {
-            abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
+        $user = Auth::user();
+
+        if ($user) {
+            // Jika akses panel /app tapi BUKAN siswa -> return 404
+            if ($panel === 'app' && $user->role !== 'siswa') {
+                abort(404);
+            }
+
+            // Jika akses panel /ujian-app tapi role-nya 'siswa' -> return 404
+            if ($panel === 'ujian-app' && $user->role === 'siswa') {
+                abort(404);
+            }
         }
 
         return $next($request);

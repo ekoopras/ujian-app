@@ -4,9 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -24,8 +26,9 @@ class User extends Authenticatable
         'password',
         'role',
         'mapel_id',
-        'kelas_id',
-        'username',
+        'nis',
+        'kelase_id',
+        'nomor_absen',
     ];
 
     /**
@@ -51,15 +54,34 @@ class User extends Authenticatable
         ];
     }
 
-    // Relasi ke Mapel (Untuk Guru)
-    public function mapels()
+    public function mapel()
     {
-        return $this->belongsToMany(Mapel::class, 'mapel_user', 'user_id', 'mapel_id');
+        return $this->belongsToMany(Mapel::class);
     }
 
-    // Relasi ke Kelas (Untuk Siswa)
-    public function kelas()
+
+    public function kelase()
     {
-        return $this->belongsTo(Kelase::class, 'kelas_id');
+        return $this->belongsTo(Kelase::class);
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Panel /app : Khusus Siswa
+        if ($panel->getId() === 'app') {
+            return $this->role === 'siswa';
+        }
+
+        // Panel /ujian-app : Khusus Admin, Guru, dan Pengawas
+        if ($panel->getId() === 'ujian-app') {
+            return in_array($this->role, ['super_admin', 'guru', 'pengawas']);
+        }
+
+        return false;
     }
 }

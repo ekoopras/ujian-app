@@ -28,7 +28,7 @@ class UjianAppPanelProvider extends PanelProvider
             ->default()
             ->id('ujian-app')
             ->path('ujian-app')
-            ->login(CustomLogin::class)
+            ->login()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -56,7 +56,7 @@ class UjianAppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                CheckRole::class . ':admin',
+                CheckRole::class . ':ujian-app',
             ]);
     }
 }

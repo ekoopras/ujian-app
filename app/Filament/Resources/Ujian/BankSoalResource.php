@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\Ujian;
 
 use App\Filament\Resources\Ujian\BankSoalResource\Pages;
-use App\Filament\Resources\Ujian\BankSoalResource\Pages\KelolaSoal;
 use App\Filament\Resources\Ujian\BankSoalResource\RelationManagers;
+use App\Models\TahunAjaran;
 use App\Models\BankSoal;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -18,44 +18,73 @@ class BankSoalResource extends Resource
 {
     protected static ?string $model = BankSoal::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'Ujian';
-    protected static ?string $modelLabel = 'Bank Soal';
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationGroup = 'Manajemen Ujian';
+    protected static ?string $pluralModelLabel = 'Bank Soal';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Soal Ujian')
-                    ->description('Lengkapi detail data pembuatan soal ujian di bawah ini.')
+                Forms\Components\Section::make('Informasi Bank Soal')
                     ->schema([
-                        // 1. Input Title Soal Ujian
-                        Forms\Components\TextInput::make('title')
-                            ->label('Judul Ujian')
+
+                        Forms\Components\TextInput::make('nama')
+                            ->label('Nama Bank Soal / Ujian')
+                            ->placeholder('Contoh: PTS Semester Ganjil IPA')
                             ->required()
-                            ->maxLength(255)
-                            ->placeholder('Contoh: Ujian Tengah Semester Matematika'),
+                            ->maxLength(255),
 
-                        // 2. Pilih Mapel Relation (Drop-down dinamis dari DB)
-                        Forms\Components\Select::make('mapel_id')
-                            ->relationship('mapel', 'name') // 'nama' adalah nama kolom di tabel mapels (ubah ke 'nama_mapel' jika perlu)
-                            ->label('Mata Pelajaran')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-
-                        // 3. Pilihan Kelas (Statis: Kelas 7, 8, dan 9)
                         Forms\Components\Select::make('kelas')
-                            ->label('Tingkat Kelas')
                             ->options([
-                                '7' => 'Kelas 7',
-                                '8' => 'Kelas 8',
-                                '9' => 'Kelas 9',
+                                'Kelas 7' => 'Kelas 7',
+                                'Kelas 8' => 'Kelas 8',
+                                'Kelas 9' => 'Kelas 9',
                             ])
                             ->required()
-                            ->native(false), // Menonaktifkan select bawaan browser agar menggunakan style UI Filament
-                    ])
-                    ->columns(3),
+                            ->native(false),
+
+                        Forms\Components\Select::make('mapel_id')
+                            ->label('Mata Pelajaran')
+                            ->options(function () {
+                                $user = auth()->user();
+
+                                // Jika Guru, ambil mapel yang terhubung lewat relasi belongsToMany mapel()
+                                if ($user?->role === 'guru') {
+                                    return $user->mapel()->pluck('name', 'mapels.id')->toArray();
+                                }
+
+                                // Jika Super Admin / Admin / Pengawas, tampilkan semua mapel
+                                return \App\Models\Mapel::pluck('name', 'id')->toArray();
+                            })
+                            ->default(function () {
+                                $user = auth()->user();
+
+                                if ($user?->role === 'guru') {
+                                    return $user->mapel()->first()?->id;
+                                }
+
+                                return null;
+                            })
+                            ->selectablePlaceholder(false)
+                            ->required(),
+
+                        Forms\Components\Select::make('tahun_ajaran_id')
+                            ->label('Tahun Ajaran')
+                            ->options(
+                                TahunAjaran::all()->mapWithKeys(function ($ta) {
+                                    return [$ta->id => "{$ta->tahun} - Semester {$ta->semester}" . ($ta->is_active ? ' (Aktif)' : '')];
+                                })
+                            )
+                            // Otomatis memilih Tahun Ajaran yang aktif
+                            ->default(fn() => TahunAjaran::where('is_active', true)->first()?->id)
+                            ->required()
+                            ->native(false),
+
+                        // Simpan ID Pembuat Soal secara tersembunyi
+                        Forms\Components\Hidden::make('user_id')
+                            ->default(fn() => auth()->id()),
+                    ])->columns(2),
             ]);
     }
 
@@ -63,43 +92,35 @@ class BankSoalResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
-                    ->label('Judul Ujian')
-                    ->searchable()
-                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('mapel.name') // Mengambil relasi nama Mapel
-                    ->label('Mata Pelajaran')
+                Tables\Columns\TextColumn::make('nama')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('kelas')
-                    ->label('Kelas')
-                    ->badge() // Menampilkan kelas dalam bentuk badge agar menarik
-                    ->color(fn(string $state): string => match ($state) {
-                        '7' => 'info',
-                        '8' => 'warning',
-                        '9' => 'success',
-                        default => 'gray',
-                    })
-                    ->sortable(),
+                    ->badge()
+                    ->color('info'),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
-                    ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('mapel.name')
+                    ->label('Mata Pelajaran')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('tahunAjaran.tahun')
+                    ->label('Tahun Ajaran')
+                    ->formatStateUsing(fn($record) => "{$record->tahunAjaran?->tahun} ({$record->tahunAjaran?->semester})"),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('addSoal')
-                    ->label('Add Soal')
-                    ->icon('heroicon-o-plus-circle')
+                Tables\Actions\Action::make('manage_soal')
+                    ->label('Kelola Soal')
+                    ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->url(fn(BankSoal $record): string => static::getUrl('kelola-soal', ['record' => $record])),
+                    ->url(fn(BankSoal $record): string => static::getUrl('manage-soal', ['record' => $record])),
 
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -119,10 +140,25 @@ class BankSoalResource extends Resource
     {
         return [
             'index' => Pages\ListBankSoals::route('/'),
+            'manage-soal' => Pages\ManageSoal::route('/{record}/soal'),
+            'view-soal'   => Pages\ViewSoal::route('/{record}/view-soal'),
             //'create' => Pages\CreateBankSoal::route('/create'),
-            'edit' => Pages\EditBankSoal::route('/{record}/edit'),
-            'kelola-soal' => KelolaSoal::route('/{record}/kelola-soal'),
-
+            //'edit' => Pages\EditBankSoal::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user?->role === 'guru') {
+            // Ambil semua ID mapel milik guru tersebut dari relasi mapel()
+            $mapelIds = $user->mapel()->pluck('mapels.id');
+
+            return $query->whereIn('mapel_id', $mapelIds);
+        }
+
+        return $query;
     }
 }

@@ -4,23 +4,34 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BankSoal extends Model
 {
     protected $fillable = [
-        'title',
+        'nama',
+        'user_id',
         'mapel_id',
+        'tahun_ajaran_id',
         'kelas',
     ];
 
-    public function mapel(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Mapel::class, 'mapel_id');
+        return $this->belongsTo(User::class);
     }
 
-    public function soals(): HasMany
+    public function mapel(): BelongsTo
     {
-        return $this->hasMany(SoalUjian::class, 'bank_soal_id');
+        return $this->belongsTo(Mapel::class);
+    }
+
+    public function tahunAjaran(): BelongsTo
+    {
+        return $this->belongsTo(TahunAjaran::class);
+    }
+
+    public function soals()
+    {
+        return $this->hasMany(Soal::class);
     }
 }

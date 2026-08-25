@@ -20,7 +20,6 @@ class MapelResource extends Resource
     protected static ?string $model = Mapel::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
-    protected static ?string $navigationGroup = 'Master Data';
     protected static ?string $navigationLabel = 'Mata Pelajaran';
 
     public static function form(Form $form): Form
@@ -75,5 +74,11 @@ class MapelResource extends Resource
             //'create' => Pages\CreateMapel::route('/create'),
             //'edit' => Pages\EditMapel::route('/{record}/edit'),
         ];
+    }
+
+    //hanya admin
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->isSuperAdmin(); // hanya super admin
     }
 }

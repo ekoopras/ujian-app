@@ -24,7 +24,6 @@ class SiswaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Data Siswa';
-    protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
     {
@@ -32,15 +31,36 @@ class SiswaResource extends Resource
             ->schema([
                 Card::make()
                     ->schema([
+                        Forms\Components\TextInput::make('nis')
+                            ->label('NIS')
+                            ->required()
+                            ->numeric()
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('Masukkan NIS (Contoh: 2024001)'),
+
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->label('Nama'),
 
-                        TextInput::make('username')
+                        Forms\Components\TextInput::make('nomor_absen')
+                            ->label('Nomor Absen')
+                            ->numeric()
+                            ->required()
+                            ->placeholder('Contoh: 01'),
+
+                        Forms\Components\Select::make('kelase_id')
+                            ->label('Kelas')
+                            ->relationship('kelase', 'name')
+                            ->preload()
+                            ->searchable(),
+
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email')
+                            ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->label('Username'),
+                            ->maxLength(255),
 
                         TextInput::make('password')
                             ->password()
@@ -50,12 +70,9 @@ class SiswaResource extends Resource
                             ->maxLength(255)
                             ->label('Password'),
 
-                        Select::make('kelas_id')
-                            ->relationship('kelas', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->label('Kelas'),
+                        Forms\Components\Hidden::make('role')
+                            ->default('siswa'),
+
                     ])->columns(2)
             ]);
     }
@@ -64,20 +81,25 @@ class SiswaResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('username')
+                TextColumn::make('nis')
                     ->searchable()
                     ->sortable()
-                    ->label('Username'),
+                    ->label('nis'),
 
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->label('Nama Siswa'),
 
-                TextColumn::make('kelas.name') // Otomatis me-looping semua nama mapel milik guru
+                TextColumn::make('nomor_absen')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Nomor Absen'),
+
+                TextColumn::make('kelase.name') // Otomatis me-looping semua nama mapel milik guru
                     ->badge() // Ditampilkan dalam bentuk kotak badge terpisah
                     ->color('success')
-                    ->label('kelas'),
+                    ->label('Kelas'),
 
                 TextColumn::make('created_at')
                     ->dateTime('d M Y')
@@ -111,5 +133,11 @@ class SiswaResource extends Resource
             //'create' => Pages\CreateSiswa::route('/create'),
             //'edit' => Pages\EditSiswa::route('/{record}/edit'),
         ];
+    }
+
+    //hanya admin
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->isSuperAdmin(); // hanya super admin
     }
 }
