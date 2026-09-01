@@ -24,6 +24,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Actions\Action as HeaderAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Textarea;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -51,6 +53,12 @@ class ManageSoal extends Page implements HasForms
         $this->form->fill([
             'soal_list' => $soals,
         ]);
+    }
+
+    // Di dalam ManageSoal.php (jika menggunakan custom page/record)
+    public function getRecord(): BankSoal
+    {
+        return parent::getRecord()->load('soals');
     }
 
     private static function makeMediaPickerField(string $fieldName, string $label)
@@ -93,9 +101,32 @@ class ManageSoal extends Page implements HasForms
             ->schema([
                 Repeater::make('soal_list')
                     ->label('')
-                    ->itemLabel(fn(array $state): ?string => strip_tags($state['pertanyaan'] ?? 'Soal Baru'))
+                    ->itemLabel(function (array $state, string $uuid, Repeater $component): string {
+                        // 1. Hitung Nomor Urut berdasarkan UUID
+                        $keys = array_keys($component->getState());
+                        $number = array_search($uuid, $keys) + 1;
+
+                        // 2. Mapping Label Tipe Soal
+                        $mapTipeSoal = [
+                            'pilihan_ganda' => 'Pilihan Ganda',
+                            'pilihan_ganda_kompleks' => 'PG Kompleks',
+                            'menjodohkan' => 'Menjodohkan',
+                            'benar_salah' => 'Benar / Salah',
+                        ];
+
+                        // 3. Ambil label tipe soal berdasarkan state
+                        $jenis = $state['jenis_soal'] ?? 'pilihan_ganda';
+                        $labelTipe = $mapTipeSoal[$jenis] ?? 'Tipe Soal';
+
+                        // 4. Hitung Total Nilai dari Repeater pilihan_jawaban
+                        $pilihanJawaban = $state['pilihan_jawaban'] ?? [];
+                        $totalNilai = array_sum(array_column($pilihanJawaban, 'nilai'));
+
+                        return "Soal No. {$number} ({$labelTipe}) - (Total Nilai: {$totalNilai})";
+                    })
                     ->collapsible()
                     ->cloneable()
+                    ->collapsed()
                     ->schema([
 
                         //PILIHAN JENIS SOAL
@@ -149,46 +180,106 @@ class ManageSoal extends Page implements HasForms
                             ->schema([
                                 Repeater::make('pilihan_jawaban')
                                     ->label('Opsi Jawaban')
+                                    ->itemLabel(function (array $state, string $uuid, Repeater $component): string {
+                                        $keys = array_keys($component->getState());
+                                        $index = array_search($uuid, $keys);
+                                        $huruf = chr(65 + ($index !== false ? $index : 0));
+
+                                        // Status Kunci Jawaban
+                                        $isKunci = ! empty($state['is_active']);
+                                        $badge = $isKunci ? ' - Kunci ' : '';
+
+                                        // Ambil nilai (default 0 jika belum terisi)
+                                        $nilai = $state['nilai'] ?? 0;
+
+                                        // Format posisi informasi nilai ditaruh di bagian paling kanan string
+                                        return "Pilihan {$huruf} - (Nilai: {$nilai}) {$badge}";
+                                    })
+                                    ->collapsible()
+                                    ->collapsed()
                                     ->schema([
-                                        TextInput::make('teks')
-                                            ->label('Pilihan Jawaban')
-                                            ->required(),
 
-                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
-                                            ->nullable(),
+                                        Grid::make(2)
+                                            ->schema([
+                                                Textarea::make('teks')
+                                                    ->label('Pilihan Jawaban')
+                                                    ->autosize()
+                                                    ->rows(5)
+                                                    ->required()
+                                                    ->columnSpan(1),
 
-                                        TextInput::make('nilai')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->required(),
+                                                // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
+                                                Grid::make(1)
+                                                    ->schema([
+                                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
+                                                            ->nullable()
+                                                            ->columnSpan(1),
+
+                                                        TextInput::make('nilai')
+                                                            ->numeric()
+                                                            ->default(0)
+                                                            ->required()
+                                                            ->columnSpan(1),
+                                                    ])
+                                                    ->columnSpan(1),
+                                            ]),
 
                                         Toggle::make('is_active')
                                             ->label('Kunci Jawaban')
                                             ->default(false),
+
+
                                     ])
-                                    ->columns(1),
+                                    ->columns(2),
                             ]),
 
                         // 2. REPEATER UNTUK PILIHAN GANDA KOMPLEKS (BANYAK JAWABAN)
-                        Section::make('Pilihan Jawaban (Banyak Kunci)')
-                            ->description('Aktifkan beberapa kunci jawaban yang benar jika ada lebih dari satu.')
+                        Section::make('')
                             ->visible(fn(Get $get) => $get('jenis_soal') === 'pilihan_ganda_kompleks')
                             ->schema([
                                 Repeater::make('pilihan_jawaban')
                                     ->label('Opsi Jawaban')
+                                    ->itemLabel(function (array $state, string $uuid, Repeater $component): string {
+                                        $keys = array_keys($component->getState());
+                                        $index = array_search($uuid, $keys);
+                                        $huruf = chr(65 + ($index !== false ? $index : 0));
+
+                                        // Status Kunci Jawaban
+                                        $isKunci = ! empty($state['is_active']);
+                                        $badge = $isKunci ? ' - Kunci ' : '';
+
+                                        // Ambil nilai (default 0 jika belum terisi)
+                                        $nilai = $state['nilai'] ?? 0;
+
+                                        // Format posisi informasi nilai ditaruh di bagian paling kanan string
+                                        return "Pilihan {$huruf} - (Nilai: {$nilai}) {$badge}";
+                                    })
+                                    ->collapsible()
+                                    ->collapsed()
                                     ->schema([
-                                        TextInput::make('teks')
-                                            ->label('Pilihan Jawaban')
-                                            ->required(),
 
-                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
-                                            ->nullable(),
+                                        Grid::make(2)
+                                            ->schema([
+                                                Textarea::make('teks')
+                                                    ->label('Pilihan Jawaban')
+                                                    ->autosize()
+                                                    ->rows(5)
+                                                    ->required(),
 
-                                        TextInput::make('nilai')
-                                            ->label('Nilai Poin')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->required(),
+                                                // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
+                                                Grid::make(1)
+                                                    ->schema([
+                                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
+                                                            ->nullable(),
+
+                                                        TextInput::make('nilai')
+                                                            ->label('Nilai Poin')
+                                                            ->numeric()
+                                                            ->default(0)
+                                                            ->required(),
+                                                    ])
+                                                    ->columnSpan(1),
+                                            ]),
 
                                         Toggle::make('is_active')
                                             ->label('Termasuk Kunci')
@@ -198,25 +289,50 @@ class ManageSoal extends Page implements HasForms
                             ]),
 
                         // 3. REPEATER UNTUK BENAR / SALAH
-                        Section::make('Pilihan Jawaban (Benar / Salah)')
-                            ->description('Buat opsi pilihan (misal: Benar / Salah) dan aktifkan Toggle pada kunci jawaban yang tepat.')
+                        Section::make('')
                             ->visible(fn(Get $get) => $get('jenis_soal') === 'benar_salah')
                             ->schema([
                                 Repeater::make('pilihan_jawaban')
                                     ->label('Opsi Pilihan')
+                                    ->itemLabel(function (array $state, string $uuid, Repeater $component): string {
+                                        $keys = array_keys($component->getState());
+                                        $index = array_search($uuid, $keys);
+                                        $huruf = chr(65 + ($index !== false ? $index : 0));
+
+                                        // Status Kunci Jawaban
+                                        $isKunci = ! empty($state['is_active']);
+                                        $badge = $isKunci ? ' - Kunci ' : '';
+
+                                        // Ambil nilai (default 0 jika belum terisi)
+                                        $nilai = $state['nilai'] ?? 0;
+
+                                        // Format posisi informasi nilai ditaruh di bagian paling kanan string
+                                        return "Pilihan {$huruf} - (Nilai: {$nilai}) {$badge}";
+                                    })
+                                    ->collapsible()
+                                    ->collapsed()
                                     ->schema([
-                                        TextInput::make('teks')
-                                            ->label('Pilihan Jawaban')
-                                            ->placeholder('Contoh: Benar / Salah')
-                                            ->required(),
+                                        Grid::make(2)
+                                            ->schema([
+                                                Textarea::make('teks')
+                                                    ->label('Pilihan Jawaban')
+                                                    ->autosize()
+                                                    ->rows(5)
+                                                    ->required(),
 
-                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
-                                            ->nullable(),
+                                                // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
+                                                Grid::make(1)
+                                                    ->schema([
+                                                        self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
+                                                            ->nullable(),
 
-                                        TextInput::make('nilai')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->required(),
+                                                        TextInput::make('nilai')
+                                                            ->numeric()
+                                                            ->default(0)
+                                                            ->required(),
+                                                    ])
+                                                    ->columnSpan(1),
+                                            ]),
 
                                         Toggle::make('is_active')
                                             ->label('Kunci Jawaban')
@@ -227,29 +343,55 @@ class ManageSoal extends Page implements HasForms
 
                         // 4. REPEATER UNTUK MENJODOHKAN
                         Section::make('Pasangan Menjodohkan')
-                            ->description('Buat pasangan antara Pernyataan/Pertanyaan (Sisi Kiri) dengan Pasangan/Jawaban (Sisi Kanan).')
                             ->visible(fn(Get $get) => $get('jenis_soal') === 'menjodohkan')
                             ->schema([
                                 Repeater::make('pilihan_jawaban')
                                     ->label('Daftar Pasangan')
-                                    ->schema([
-                                        TextInput::make('kunci')
-                                            ->label('Sisi Kiri (Pernyataan / Soal)')
-                                            ->placeholder('Contoh: Ibu Kota Indonesia')
-                                            ->required(),
+                                    ->itemLabel(function (array $state, string $uuid, Repeater $component): string {
+                                        $keys = array_keys($component->getState());
+                                        $index = array_search($uuid, $keys);
+                                        $number = ($index !== false ? $index : 0) + 1;
 
-                                        TextInput::make('nilai_pasangan')
+                                        // Ambil nilai poin (default 1 jika belum terisi)
+                                        $nilai = $state['nilai'] ?? 1;
+
+                                        return "Pertanyaan {$number}  —  [Nilai: {$nilai}]";
+                                    })
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->schema([
+                                        // Sisi Kiri: Teks & Gambar dibungkus dalam 1 Group (Mengambil 2 kolom)
+                                        Group::make([
+                                            Textarea::make('kunci')
+                                                ->label('Sisi Kiri (Pernyataan / Soal)')
+                                                ->placeholder('Contoh: Ibu Kota Indonesia')
+                                                ->autosize()
+                                                ->rows(2)
+                                                ->required(),
+
+                                            self::makeMediaPickerField('kunci_gambar', 'Gambar Pernyataan (Opsional)')
+                                                ->nullable(),
+                                        ])
+                                            ->columnSpan(2), // Group ini memakan 2 porsi grid
+
+                                        // Sisi Kanan: Pasangan Jawaban (Mengambil 2 kolom)
+                                        Textarea::make('nilai_pasangan')
                                             ->label('Sisi Kanan (Pasangan / Jawaban Benar)')
                                             ->placeholder('Contoh: Jakarta')
-                                            ->required(),
+                                            ->autosize()
+                                            ->rows(5)
+                                            ->required()
+                                            ->columnSpan(2), // Memakan 2 porsi grid
 
+                                        // Nilai Poin (Mengambil 1 kolom)
                                         TextInput::make('nilai')
                                             ->label('Nilai Poin')
                                             ->numeric()
                                             ->default(1)
-                                            ->required(),
+                                            ->required()
+                                            ->columnSpan(1), // Memakan 1 porsi grid
                                     ])
-                                    ->columns(3),
+                                    ->columns(5) // Total grid luar diset 5 kolom
                             ]),
 
                     ])
@@ -325,6 +467,7 @@ class ManageSoal extends Page implements HasForms
                     $pilihanJawaban = collect($pilihanJawabanRaw)
                         ->map(fn($jawaban) => [
                             'kunci'          => $jawaban['kunci'] ?? '',
+                            'kunci_gambar'   => $jawaban['kunci_gambar'] ?? null,
                             'nilai_pasangan' => $jawaban['nilai_pasangan'] ?? '',
                             'nilai'          => (int) ($jawaban['nilai'] ?? 0),
                         ])

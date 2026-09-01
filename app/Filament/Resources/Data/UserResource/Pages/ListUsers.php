@@ -13,7 +13,12 @@ class ListUsers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->button()
+                ->label('Tambah User')
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->modalHeading('Tambah User'),
         ];
     }
 }

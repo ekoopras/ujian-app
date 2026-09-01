@@ -107,6 +107,7 @@ class UjianResource extends Resource
                 Tables\Columns\TextColumn::make('kelases.name')
                     ->label('Kelas')
                     ->badge()
+                    ->color('success')
                     ->separator(','),
 
                 Tables\Columns\TextColumn::make('token')
@@ -126,11 +127,22 @@ class UjianResource extends Resource
                     ->onColor('success')
                     ->offColor('danger'),
             ])
+            ->defaultPaginationPageOption(50) // Set default awal ke 10 data
+            ->paginationPageOptions([50])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Ujian'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Ujian'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -150,8 +162,8 @@ class UjianResource extends Resource
     {
         return [
             'index' => Pages\ListUjians::route('/'),
-            'create' => Pages\CreateUjian::route('/create'),
-            'edit' => Pages\EditUjian::route('/{record}/edit'),
+            //'create' => Pages\CreateUjian::route('/create'),
+            //'edit' => Pages\EditUjian::route('/{record}/edit'),
         ];
     }
 }

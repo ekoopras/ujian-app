@@ -13,6 +13,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -24,6 +26,7 @@ class SiswaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Data Siswa';
+    protected static ?string $pluralLabel = 'Data Siswa';
 
     public static function form(Form $form): Form
     {
@@ -106,11 +109,27 @@ class SiswaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Tanggal Terdaftar'),
             ])
+            ->defaultPaginationPageOption(30) // Set default awal ke 10 data
+            ->paginationPageOptions([30])
             ->filters([
-                //
+                SelectFilter::make('kelase_id')
+                    ->label('Select Kelas')
+                    ->relationship('kelase', 'name') // Otomatis mengambil daftar dari model Kelase
+                    ->searchable()
+                    ->preload(),
             ])
+            ->filtersLayout(FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Siswa'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Siswa'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

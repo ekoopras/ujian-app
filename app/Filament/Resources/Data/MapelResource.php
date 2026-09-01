@@ -21,6 +21,7 @@ class MapelResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
     protected static ?string $navigationLabel = 'Mata Pelajaran';
+    protected static ?string $pluralLabel = 'Data Mapel';
 
     public static function form(Form $form): Form
     {
@@ -33,7 +34,7 @@ class MapelResource extends Resource
                     ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
 
                 Forms\Components\Hidden::make('slug'),
-            ]);
+            ])->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -47,11 +48,22 @@ class MapelResource extends Resource
                 Tables\Columns\TextColumn::make('slug')
                     ->label('Slug'),
             ])
+            ->defaultPaginationPageOption(10) // Set default awal ke 10 data
+            ->paginationPageOptions([10])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Mapel'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Mapel'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

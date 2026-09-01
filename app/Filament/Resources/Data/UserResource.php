@@ -86,11 +86,22 @@ class UserResource extends Resource
 
                 Tables\Columns\TextColumn::make('role'),
             ])
+            ->defaultPaginationPageOption(30) // Set default awal ke 10 data
+            ->paginationPageOptions([30])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit User'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus User'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

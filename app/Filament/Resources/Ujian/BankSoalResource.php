@@ -110,6 +110,8 @@ class BankSoalResource extends Resource
                     ->label('Tahun Ajaran')
                     ->formatStateUsing(fn($record) => "{$record->tahunAjaran?->tahun} ({$record->tahunAjaran?->semester})"),
             ])
+            ->defaultPaginationPageOption(10) // Set default awal ke 10 data
+            ->paginationPageOptions([10])
             ->filters([
                 //
             ])
@@ -117,10 +119,20 @@ class BankSoalResource extends Resource
                 Tables\Actions\Action::make('manage_soal')
                     ->label('Kelola Soal')
                     ->icon('heroicon-o-document-text')
-                    ->color('success')
+                    ->color('info')
+                    ->button()
                     ->url(fn(BankSoal $record): string => static::getUrl('manage-soal', ['record' => $record])),
 
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Bank Soal'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Bank Soal'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

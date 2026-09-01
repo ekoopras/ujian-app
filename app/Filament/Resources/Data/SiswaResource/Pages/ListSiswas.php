@@ -13,7 +13,12 @@ class ListSiswas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->button()
+                ->label('Tambah Siswa')
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->modalHeading('Tambah Siswa'),
         ];
     }
 }

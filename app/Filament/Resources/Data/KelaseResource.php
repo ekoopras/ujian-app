@@ -24,6 +24,7 @@ class KelaseResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationLabel = 'Data Kelas';
+    protected static ?string $pluralLabel = 'Data Kelas';
     // protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
@@ -37,7 +38,7 @@ class KelaseResource extends Resource
                     ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
 
                 Forms\Components\Hidden::make('slug'),
-            ]);
+            ])->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -51,11 +52,22 @@ class KelaseResource extends Resource
                 TextColumn::make('slug')
                     ->label('Slug'),
             ])
+            ->defaultPaginationPageOption(10) // Set default awal ke 10 data
+            ->paginationPageOptions([10])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Kelas'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Kelas'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -8,7 +8,7 @@
             :disabled="$currentIndex === 0"
             icon="heroicon-o-chevron-left"
             color="gray">
-            Sebelumnya
+            Prev
         </x-filament::button>
 
         <!-- TENGAH: Checkbox Ragu-Ragu & Info Soal -->
@@ -28,7 +28,7 @@
                     @checked($isRaguAktif)
                     class="rounded text-amber-500 focus:ring-amber-400 border-amber-400 dark:border-amber-600">
                 <span class="text-xs font-bold text-amber-700 dark:text-amber-300 whitespace-nowrap">
-                    Ragu - Ragu
+                    Ragu
                 </span>
             </label>
             @endif
@@ -42,7 +42,7 @@
             color="success"
             icon="heroicon-o-check-circle"
             wire:confirm="Apakah Anda yakin ingin menyelesaikan ujian ini? Seluruh jawaban akan dikirimkan.">
-            Selesaikan Ujian
+            Submit
         </x-filament::button>
         @else
         <x-filament::button
@@ -50,7 +50,7 @@
             wire:click="nextSoal"
             icon="heroicon-o-chevron-right"
             icon-position="after">
-            Selanjutnya
+            Next
         </x-filament::button>
         @endif
 

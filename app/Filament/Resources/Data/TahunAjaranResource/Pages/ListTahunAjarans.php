@@ -13,7 +13,12 @@ class ListTahunAjarans extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->button()
+                ->label('Tahun Ajaran')
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->modalHeading('Tambah Tahun Ajaran'),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\App\Pages\Auth\CustomLogin;
 use App\Filament\App\Pages\DaftarUjian;
 use App\Filament\App\Pages\ReviewUjian;
+use App\Filament\App\Pages\UjianPage;
 use App\Http\Middleware\CheckRole;
 use App\Livewire\App\DashboardSiswa;
 use Filament\Http\Middleware\Authenticate;
@@ -24,6 +25,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -51,6 +53,27 @@ class AppPanelProvider extends PanelProvider
                         }
                     }
                 </script>
+                <style>
+                    .fi-topbar-open-sidebar-btn {
+                        display: none !important;
+                    }
+
+                    .fi-topbar-item {
+                        display: none !important;
+                    }
+
+                    body {
+                        -webkit-user-select: none; /* Safari */
+                        -ms-user-select: none;     /* IE 10 dan versi setelahnya */
+                        user-select: none;         /* Standard syntax */
+                    }
+                    input, textarea {
+                        -webkit-user-select: text;
+                        -ms-user-select: text;
+                        user-select: text;
+                    }
+                </style>
+                
             '
         );
 
@@ -58,14 +81,32 @@ class AppPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
+            ->homeUrl(fn() => UjianPage::getUrl())
             ->topNavigation()
+            ->darkMode(false)
+            ->brandName('')
+
+            //logo
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn(): string => Blade::render('
+                    <div class="flex items-center gap-x-3 pl-2 md:pl-4">
+                        <img src="' . asset('logoapp.png') . '" alt="Logo" class="h-10 w-auto">
+                        <span class="text-md font-bold tracking-tight text-gray-900 dark:text-white">
+                            EXAM-SPENSATA
+                        </span>
+                    </div>
+                '),
+            )
+
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                // Pages\Dashboard::class,
+                UjianPage::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([

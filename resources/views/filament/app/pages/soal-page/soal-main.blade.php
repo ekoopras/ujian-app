@@ -11,6 +11,10 @@
     ? $soalAktif->pilihan_jawaban
     : json_decode($soalAktif->pilihan_jawaban ?? '[]', true);
 
+    $pernyataanBS = is_array($soalAktif->pernyataan_bs)
+    ? $soalAktif->pernyataan_bs
+    : json_decode($soalAktif->pernyataan_bs ?? '[]', true);
+
     $pasanganKiri = is_array($soalAktif->pasangan_kiri)
     ? $soalAktif->pasangan_kiri
     : json_decode($soalAktif->pasangan_kiri ?? '[]', true);

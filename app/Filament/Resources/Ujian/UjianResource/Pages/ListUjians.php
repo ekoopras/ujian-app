@@ -13,7 +13,12 @@ class ListUjians extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->button()
+                ->label('Tambah Ujian')
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->modalHeading('Tambah Ujian'),
         ];
     }
 }

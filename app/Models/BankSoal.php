@@ -15,6 +15,31 @@ class BankSoal extends Model
         'kelas',
     ];
 
+    /**
+     * Accessor untuk menghitung Total Jumlah Soal
+     */
+    public function getTotalSoalAttribute(): int
+    {
+        return $this->soals()->count();
+    }
+
+    public function getTotalNilaiAttribute(): int
+    {
+        $soals = $this->soals()->get();
+
+        $totalNilai = 0;
+
+        foreach ($soals as $soal) {
+            $pilihanJawaban = $soal->pilihan_jawaban ?? [];
+
+            if (is_array($pilihanJawaban)) {
+                $totalNilai += array_sum(array_column($pilihanJawaban, 'nilai'));
+            }
+        }
+
+        return $totalNilai;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -21,6 +21,7 @@ class TahunAjaranResource extends Resource
     protected static ?string $model = TahunAjaran::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $pluralLabel = 'Data Tahun Ajaran';
 
     public static function form(Form $form): Form
     {
@@ -68,11 +69,22 @@ class TahunAjaranResource extends Resource
                     ->label('Aktif')
                     ->boolean(),
             ])
+            ->defaultPaginationPageOption(10) // Set default awal ke 10 data
+            ->paginationPageOptions([10])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('success')
+                    ->modalHeading('Edit Tahun Ajaran'),
+                Tables\Actions\DeleteAction::make()
+                    ->button()
+                    ->label('')
+                    ->color('danger')
+                    ->modalHeading('Hapus Tahun Ajaran'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

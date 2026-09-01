@@ -85,11 +85,13 @@ class MediaResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultPaginationPageOption(10) // Set default awal ke 10 data
+            ->paginationPageOptions([10])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -109,8 +111,8 @@ class MediaResource extends Resource
     {
         return [
             'index' => Pages\ListMedia::route('/'),
-            'create' => Pages\CreateMedia::route('/create'),
-            'edit' => Pages\EditMedia::route('/{record}/edit'),
+            //'create' => Pages\CreateMedia::route('/create'),
+            //'edit' => Pages\EditMedia::route('/{record}/edit'),
         ];
     }
 
