@@ -16,6 +16,7 @@ class UjianSiswa extends Model
         'jawaban_siswa',
         'status',
         'ragu_siswa',
+        'is_rekaped',
     ];
 
     protected $casts = [
