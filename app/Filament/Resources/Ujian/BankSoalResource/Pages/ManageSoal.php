@@ -205,7 +205,6 @@ class ManageSoal extends Page implements HasForms
                                                     ->label('Pilihan Jawaban')
                                                     ->autosize()
                                                     ->rows(5)
-                                                    ->required()
                                                     ->columnSpan(1),
 
                                                 // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
@@ -263,8 +262,7 @@ class ManageSoal extends Page implements HasForms
                                                 Textarea::make('teks')
                                                     ->label('Pilihan Jawaban')
                                                     ->autosize()
-                                                    ->rows(5)
-                                                    ->required(),
+                                                    ->rows(5),
 
                                                 // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
                                                 Grid::make(1)
@@ -317,8 +315,7 @@ class ManageSoal extends Page implements HasForms
                                                 Textarea::make('teks')
                                                     ->label('Pilihan Jawaban')
                                                     ->autosize()
-                                                    ->rows(5)
-                                                    ->required(),
+                                                    ->rows(5),
 
                                                 // Bungkus kolom kanan dalam 1 Grid/Group tersendiri
                                                 Grid::make(1)
@@ -366,8 +363,7 @@ class ManageSoal extends Page implements HasForms
                                                 ->label('Sisi Kiri (Pernyataan / Soal)')
                                                 ->placeholder('Contoh: Ibu Kota Indonesia')
                                                 ->autosize()
-                                                ->rows(2)
-                                                ->required(),
+                                                ->rows(2),
 
                                             self::makeMediaPickerField('kunci_gambar', 'Gambar Pernyataan (Opsional)')
                                                 ->nullable(),

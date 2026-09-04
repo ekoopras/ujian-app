@@ -38,24 +38,53 @@ class UjianResource extends Resource
                             ->preload()
                             ->required(),
 
+                        // Forms\Components\Select::make('mapel_id')
+                        //     ->label('Mata Pelajaran')
+                        //     ->relationship('mapel', 'name')
+                        //     ->searchable()
+                        //     ->preload()
+                        //     ->live()
+                        //     ->required(),
+
                         Forms\Components\Select::make('mapel_id')
                             ->label('Mata Pelajaran')
-                            ->relationship('mapel', 'name')
+                            ->options(function () {
+                                $user = auth()->user();
+
+                                // Jika Guru, ambil mapel yang terhubung (Format: [id => name])
+                                if ($user?->role === 'guru') {
+                                    return $user->mapel()->pluck('mapels.name', 'mapels.id')->toArray();
+                                }
+
+                                // Jika Super Admin / Admin / Pengawas, tampilkan semua mapel
+                                return \App\Models\Mapel::pluck('name', 'id')->toArray();
+                            })
+                            ->placeholder('Pilih Mata Pelajaran')
                             ->searchable()
-                            ->preload()
                             ->live()
+                            // Reset nilai bank_soal_id jika user mengganti pilihan mapel
+                            ->afterStateUpdated(fn(Forms\Set $set) => $set('bank_soal_id', null))
                             ->required(),
 
                         Forms\Components\Select::make('bank_soal_id')
                             ->label('Bank Soal')
-                            ->relationship(
-                                'bankSoal',
-                                'nama',
-                                fn($query, Forms\Get $get) =>
-                                $query->when($get('mapel_id'), fn($q, $mapelId) => $q->where('mapel_id', $mapelId))
-                            )
+                            ->options(function (Forms\Get $get) {
+                                $mapelId = $get('mapel_id');
+
+                                // Jika mapel_id belum dipilih, kosongkan pilihan
+                                if (! $mapelId) {
+                                    return [];
+                                }
+
+                                // Ambil Bank Soal berdasarkan mapel_id dan format labelnya: "Nama Bank Soal - Kelas X"
+                                return \App\Models\BankSoal::where('mapel_id', $mapelId)
+                                    ->get()
+                                    ->mapWithKeys(fn($bankSoal) => [
+                                        $bankSoal->id => "{$bankSoal->nama} - Kelas {$bankSoal->kelas}"
+                                    ])
+                                    ->toArray();
+                            })
                             ->searchable()
-                            ->preload()
                             ->required(),
 
                         Forms\Components\Select::make('kelases')
@@ -165,5 +194,20 @@ class UjianResource extends Resource
             //'create' => Pages\CreateUjian::route('/create'),
             //'edit' => Pages\EditUjian::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user?->role === 'guru') {
+            // Ambil semua ID mapel milik guru tersebut dari relasi mapel()
+            $mapelIds = $user->mapel()->pluck('mapels.id');
+
+            return $query->whereIn('mapel_id', $mapelIds);
+        }
+
+        return $query;
     }
 }

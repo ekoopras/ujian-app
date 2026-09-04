@@ -20,6 +20,7 @@ class MapelResource extends Resource
     protected static ?string $model = Mapel::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationGroup = 'Data Sekolah';
     protected static ?string $navigationLabel = 'Mata Pelajaran';
     protected static ?string $pluralLabel = 'Data Mapel';
 

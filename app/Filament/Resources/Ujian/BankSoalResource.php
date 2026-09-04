@@ -49,24 +49,16 @@ class BankSoalResource extends Resource
                             ->options(function () {
                                 $user = auth()->user();
 
-                                // Jika Guru, ambil mapel yang terhubung lewat relasi belongsToMany mapel()
+                                // Jika Guru, ambil mapel yang terhubung lewat relasi mapel()
                                 if ($user?->role === 'guru') {
-                                    return $user->mapel()->pluck('name', 'mapels.id')->toArray();
+                                    return $user->mapel()->pluck('mapels.name', 'mapels.id')->toArray();
                                 }
 
                                 // Jika Super Admin / Admin / Pengawas, tampilkan semua mapel
                                 return \App\Models\Mapel::pluck('name', 'id')->toArray();
                             })
-                            ->default(function () {
-                                $user = auth()->user();
-
-                                if ($user?->role === 'guru') {
-                                    return $user->mapel()->first()?->id;
-                                }
-
-                                return null;
-                            })
-                            ->selectablePlaceholder(false)
+                            ->placeholder('Pilih Mata Pelajaran')
+                            ->searchable()
                             ->required(),
 
                         Forms\Components\Select::make('tahun_ajaran_id')

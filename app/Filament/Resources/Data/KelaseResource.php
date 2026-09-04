@@ -23,6 +23,7 @@ class KelaseResource extends Resource
     protected static ?string $model = Kelase::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationGroup = 'Data Sekolah';
     protected static ?string $navigationLabel = 'Data Kelas';
     protected static ?string $pluralLabel = 'Data Kelas';
     // protected static ?string $navigationGroup = 'Master Data';

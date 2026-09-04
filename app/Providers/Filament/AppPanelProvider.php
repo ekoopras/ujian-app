@@ -54,13 +54,7 @@ class AppPanelProvider extends PanelProvider
                     }
                 </script>
                 <style>
-                    .fi-topbar-open-sidebar-btn {
-                        display: none !important;
-                    }
-
-                    .fi-topbar-item {
-                        display: none !important;
-                    }
+                    
 
                     body {
                         -webkit-user-select: none; /* Safari */
@@ -90,6 +84,15 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn(): string => Blade::render('
+                <style>
+                    .fi-topbar-open-sidebar-btn {
+                            display: none !important;
+                        }
+
+                    .fi-topbar-item {
+                        display: none !important;
+                    }
+                </style>
                     <div class="flex items-center gap-x-3 pl-2 md:pl-4">
                         <img src="' . asset('logoapp.png') . '" alt="Logo" class="h-10 w-auto">
                         <span class="text-md font-bold tracking-tight text-gray-900 dark:text-white">

@@ -30,6 +30,7 @@ class UjianAppPanelProvider extends PanelProvider
             ->path('ujian-app')
             ->breadcrumbs(false)
             ->login()
+            ->topNavigation()
             ->colors([
                 'primary' => Color::Amber,
             ])

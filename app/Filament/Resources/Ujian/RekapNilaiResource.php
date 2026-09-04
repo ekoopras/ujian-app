@@ -15,12 +15,15 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class RekapNilaiResource extends Resource
 {
     protected static ?string $model = RekapNilai::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Manajemen Ujian';
+    protected static ?string $pluralModelLabel = 'Rekap Nilai';
 
     public static function form(Form $form): Form
     {
@@ -164,5 +167,20 @@ class RekapNilaiResource extends Resource
             'create' => Pages\CreateRekapNilai::route('/create'),
             'edit' => Pages\EditRekapNilai::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user?->role === 'guru') {
+            // Ganti 'mapels.nama_mapel' dengan nama kolom yang benar (contoh: 'mapels.nama')
+            $namaMapels = $user->mapel()->pluck('mapels.name');
+
+            return $query->whereIn('nama_mapel', $namaMapels);
+        }
+
+        return $query;
     }
 }

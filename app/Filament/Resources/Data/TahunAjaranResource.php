@@ -21,6 +21,7 @@ class TahunAjaranResource extends Resource
     protected static ?string $model = TahunAjaran::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationGroup = 'Data Sekolah';
     protected static ?string $pluralLabel = 'Data Tahun Ajaran';
 
     public static function form(Form $form): Form

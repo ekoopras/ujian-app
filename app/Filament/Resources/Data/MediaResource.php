@@ -19,6 +19,7 @@ class MediaResource extends Resource
     protected static ?string $model = Media::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $pluralLabel = 'File Media';
 
     public static function form(Form $form): Form
     {
