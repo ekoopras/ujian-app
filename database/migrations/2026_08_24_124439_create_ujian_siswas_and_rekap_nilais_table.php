@@ -19,9 +19,9 @@ return new class extends Migration
             $table->timestamp('waktu_selesai_seharusnya');
             $table->timestamp('waktu_submit')->nullable();
             $table->json('jawaban_siswa')->nullable(); // format: {"soal_id": "jawaban"}
-            $table->json('ragu_siswa')->nullable()->after('jawaban_siswa');
+            $table->json('ragu_siswa')->nullable();
             $table->enum('status', ['sedang_mengerjakan', 'selesai'])->default('sedang_mengerjakan');
-            $table->boolean('is_rekaped')->default(false)->after('status');
+            $table->boolean('is_rekaped')->default(false);
             $table->timestamps();
         });
 
