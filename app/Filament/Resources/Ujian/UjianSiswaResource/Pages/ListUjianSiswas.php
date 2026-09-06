@@ -167,7 +167,6 @@ class ListUjianSiswas extends ListRecords
                                             'tahun_ajaran_id' => $tahunAjaranId,
                                             'nama_mapel'      => $ujian->mapel->name ?? '-',
                                             'nama_siswa'      => $user->name,
-                                            'nis'             => $user->nis ?? '-',
                                             'nama_kelas'      => $namaKelas,
                                             'tahun_ajaran'    => $tahunAjaranText,
                                             'total_soal'      => $totalSoal,

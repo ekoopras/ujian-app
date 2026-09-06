@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('nis')->nullable()->unique();
             $table->foreignId('kelase_id')->nullable()->constrained();
             $table->string('nomor_absen')->nullable();
         });

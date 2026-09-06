@@ -35,13 +35,6 @@ class SiswaResource extends Resource
             ->schema([
                 Card::make()
                     ->schema([
-                        Forms\Components\TextInput::make('nis')
-                            ->label('NIS')
-                            ->required()
-                            ->numeric()
-                            ->unique(ignoreRecord: true)
-                            ->placeholder('Masukkan NIS (Contoh: 2024001)'),
-
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -85,25 +78,25 @@ class SiswaResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('nis')
+                TextColumn::make('nomor_absen')
                     ->searchable()
                     ->sortable()
-                    ->label('nis'),
+                    ->label('Absen'),
 
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->label('Nama Siswa'),
 
-                TextColumn::make('nomor_absen')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Nomor Absen'),
-
                 TextColumn::make('kelase.name') // Otomatis me-looping semua nama mapel milik guru
                     ->badge() // Ditampilkan dalam bentuk kotak badge terpisah
                     ->color('success')
                     ->label('Kelas'),
+
+                TextColumn::make('email')
+                    ->searchable()
+                    ->sortable()
+                    ->label('User Gmail'),
 
                 TextColumn::make('created_at')
                     ->dateTime('d M Y')

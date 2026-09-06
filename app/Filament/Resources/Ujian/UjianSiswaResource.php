@@ -18,6 +18,8 @@ class UjianSiswaResource extends Resource
     protected static ?string $model = UjianSiswa::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Manajemen Ujian';
+    protected static ?string $pluralModelLabel = 'Sesi Ujian Siswa';
 
     public static function form(Form $form): Form
     {
@@ -116,5 +118,23 @@ class UjianSiswaResource extends Resource
             'create' => Pages\CreateUjianSiswa::route('/create'),
             'edit' => Pages\EditUjianSiswa::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user?->role === 'guru') {
+            // Ambil ID mapel yang diampu oleh guru yang sedang login
+            $mapelIds = $user->mapel()->pluck('mapels.id'); // sesuaikan 'mapels.id' atau 'id'
+
+            // Filter tabel utama berdasarkan hubungan ke ujian -> mapel
+            return $query->whereHas('ujian', function (Builder $query) use ($mapelIds) {
+                $query->whereIn('mapel_id', $mapelIds); // sesuaikan 'mapel_id' di tabel ujians
+            });
+        }
+
+        return $query;
     }
 }

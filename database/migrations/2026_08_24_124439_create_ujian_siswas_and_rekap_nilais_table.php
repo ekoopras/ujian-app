@@ -36,7 +36,6 @@ return new class extends Migration
             // Backup informasi Ujian & Siswa dalam bentuk string
             $table->string('nama_mapel');
             $table->string('nama_siswa');
-            $table->string('nis')->nullable();
             $table->string('nama_kelas')->nullable();
 
             $table->integer('total_soal')->default(0);

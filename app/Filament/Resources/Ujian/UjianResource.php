@@ -21,7 +21,7 @@ class UjianResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-check';
     protected static ?string $navigationGroup = 'Manajemen Ujian';
-    protected static ?string $pluralModelLabel = 'Sesi Ujian';
+    protected static ?string $pluralModelLabel = 'Ujian Siswa';
 
     public static function form(Form $form): Form
     {

@@ -36,4 +36,9 @@ class UjianSiswa extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function mapel(): BelongsTo
+    {
+        return $this->belongsTo(Mapel::class, 'nama_mapel', 'name');
+    }
 }

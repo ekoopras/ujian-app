@@ -21,7 +21,7 @@ class RekapNilaiResource extends Resource
 {
     protected static ?string $model = RekapNilai::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static ?string $navigationGroup = 'Manajemen Ujian';
     protected static ?string $pluralModelLabel = 'Rekap Nilai';
 
@@ -45,11 +45,6 @@ class RekapNilaiResource extends Resource
 
                 TextColumn::make('user.name')
                     ->label('Siswa')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('nis')
-                    ->label('NIS')
                     ->searchable()
                     ->sortable(),
 

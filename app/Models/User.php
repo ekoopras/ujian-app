@@ -26,7 +26,6 @@ class User extends Authenticatable
         'password',
         'role',
         'mapel_id',
-        'nis',
         'kelase_id',
         'nomor_absen',
     ];

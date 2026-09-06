@@ -14,7 +14,6 @@ class RekapNilai extends Model
 
         'nama_mapel',
         'nama_siswa',
-        'nis',
         'nama_kelas',
         'total_soal',
         'jawaban_benar',
