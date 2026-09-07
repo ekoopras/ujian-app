@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -82,5 +84,12 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            set: fn(?string $value) => $value ? Str::title(mb_strtolower(trim($value))) : null,
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Auth\CustomLogin;
+use App\Filament\App\Pages\Auth\RegisterSiswa;
 use App\Filament\App\Pages\DaftarUjian;
 use App\Filament\App\Pages\ReviewUjian;
 use App\Filament\App\Pages\UjianPage;
@@ -75,10 +76,11 @@ class AppPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
+
             ->homeUrl(fn() => UjianPage::getUrl())
             ->topNavigation()
             ->darkMode(false)
-            ->brandName('')
+            ->brandName('UjianApp')
 
             //logo
             ->renderHook(
@@ -92,11 +94,14 @@ class AppPanelProvider extends PanelProvider
                     .fi-topbar-item {
                         display: none !important;
                     }
+                    .fi-logo {
+                        display: none !important;
+                    }
                 </style>
                     <div class="flex items-center gap-x-3 pl-2 md:pl-4">
-                        <img src="' . asset('logoapp.png') . '" alt="Logo" class="h-10 w-auto">
+                        <img src="' . asset('ico.jpeg') . '" alt="Logo" class="h-10 w-auto">
                         <span class="text-md font-bold tracking-tight text-gray-900 dark:text-white">
-                            EXAM-SPENSATA
+                            
                         </span>
                     </div>
                 '),

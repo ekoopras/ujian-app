@@ -19,6 +19,8 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class UjianAppPanelProvider extends PanelProvider
 {
@@ -30,6 +32,24 @@ class UjianAppPanelProvider extends PanelProvider
             ->path('ujian-app')
             ->breadcrumbs(false)
             ->login()
+            //logo
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn(): string => Blade::render('
+                <style>
+                    
+                    .fi-logo {
+                        display: none !important;
+                    }
+                </style>
+                    <div class="flex items-center gap-x-3 pl-2 md:pl-4">
+                        <img src="' . asset('ico.jpeg') . '" alt="Logo" class="h-10 w-auto">
+                        <span class="text-md font-bold tracking-tight text-gray-900 dark:text-white">
+                            
+                        </span>
+                    </div>
+                '),
+            )
             ->topNavigation()
             ->colors([
                 'primary' => Color::Amber,
