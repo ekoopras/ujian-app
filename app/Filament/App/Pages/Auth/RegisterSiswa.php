@@ -73,8 +73,8 @@ class RegisterSiswa extends BaseRegister
             ->success()
             ->send();
 
-        // 3. Redirect kembali ke halaman login (tanpa auto-login)
-        $this->redirect(filament()->getLoginUrl());
+        // 3. Redirect spesifik ke halaman login panel 'app'
+        $this->redirect(filament()->getPanel('app')->getLoginUrl());
 
         return null;
     }
