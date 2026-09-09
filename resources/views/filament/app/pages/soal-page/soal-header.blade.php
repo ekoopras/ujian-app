@@ -45,9 +45,54 @@
             </div>
         </x-filament::modal>
 
-        <div class="text-right border-l pl-3 dark:border-gray-700">
-            <span class="text-[10px] text-gray-400 font-semibold uppercase block">Mode</span>
-            <span class="text-xs font-bold text-amber-500">Timer Off</span>
+        <div class="text-right border-l pl-3 dark:border-gray-700"
+            x-data="{
+        sisaDetik: @js($sisaDetik),
+        formattedTime: '',
+        timer: null,
+        init() {
+            if (this.sisaDetik <= 0) return;
+            
+            this.updateTimer();
+            this.timer = setInterval(() => {
+                if (this.sisaDetik > 0) {
+                    this.sisaDetik--;
+                    this.updateTimer();
+                } else {
+                    clearInterval(this.timer);
+                    $wire.submitUjian();
+                }
+            }, 1000);
+        },
+        updateTimer() {
+            let jam = Math.floor(this.sisaDetik / 3600);
+            let menit = Math.floor((this.sisaDetik % 3600) / 60);
+            let detik = this.sisaDetik % 60;
+
+            let pad = (num) => String(num).padStart(2, '0');
+            
+            if (jam > 0) {
+                this.formattedTime = `${pad(jam)}:${pad(menit)}:${pad(detik)}`;
+            } else {
+                this.formattedTime = `${pad(menit)}:${pad(detik)}`;
+            }
+        }
+     }">
+            <span class="text-[10px] text-gray-400 font-semibold uppercase block">
+                {{ $sisaDetik > 0 ? 'Sisa Waktu' : 'Mode' }}
+            </span>
+
+            <template x-if="sisaDetik > 0">
+                <span class="text-xs font-bold text-amber-500 font-mono tracking-wider" x-text="formattedTime">
+                    00:00
+                </span>
+            </template>
+
+            <template x-if="sisaDetik <= 0">
+                <span class="text-xs font-bold text-amber-500">
+                    Timer Off
+                </span>
+            </template>
         </div>
     </div>
 </div>

@@ -26,6 +26,7 @@ use Filament\Actions\Action as HeaderAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Set;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -212,6 +213,16 @@ class ManageSoal extends Page implements HasForms
                                                     ->schema([
                                                         self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
                                                             ->nullable()
+                                                            ->suffixAction(
+                                                                Action::make('clear_gambar_jawaban')
+                                                                    ->icon('heroicon-m-trash')
+                                                                    ->color('danger')
+                                                                    ->tooltip('Hapus Gambar')
+                                                                    ->action(function (Set $set) {
+                                                                        // Set nilai gambar_jawaban menjadi null
+                                                                        $set('gambar_jawaban', null);
+                                                                    })
+                                                            )
                                                             ->columnSpan(1),
 
                                                         TextInput::make('nilai')
@@ -268,6 +279,16 @@ class ManageSoal extends Page implements HasForms
                                                 Grid::make(1)
                                                     ->schema([
                                                         self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
+                                                            ->suffixAction(
+                                                                Action::make('clear_gambar_jawaban')
+                                                                    ->icon('heroicon-m-trash')
+                                                                    ->color('danger')
+                                                                    ->tooltip('Hapus Gambar')
+                                                                    ->action(function (Set $set) {
+                                                                        // Set nilai gambar_jawaban menjadi null
+                                                                        $set('gambar_jawaban', null);
+                                                                    })
+                                                            )
                                                             ->nullable(),
 
                                                         TextInput::make('nilai')
@@ -321,6 +342,16 @@ class ManageSoal extends Page implements HasForms
                                                 Grid::make(1)
                                                     ->schema([
                                                         self::makeMediaPickerField('gambar_jawaban', 'Gambar Jawaban (Opsional)')
+                                                            ->suffixAction(
+                                                                Action::make('clear_gambar_jawaban')
+                                                                    ->icon('heroicon-m-trash')
+                                                                    ->color('danger')
+                                                                    ->tooltip('Hapus Gambar')
+                                                                    ->action(function (Set $set) {
+                                                                        // Set nilai gambar_jawaban menjadi null
+                                                                        $set('gambar_jawaban', null);
+                                                                    })
+                                                            )
                                                             ->nullable(),
 
                                                         TextInput::make('nilai')
@@ -366,6 +397,16 @@ class ManageSoal extends Page implements HasForms
                                                 ->rows(2),
 
                                             self::makeMediaPickerField('kunci_gambar', 'Gambar Pernyataan (Opsional)')
+                                                ->suffixAction(
+                                                    Action::make('clear_gambar_jawaban')
+                                                        ->icon('heroicon-m-trash')
+                                                        ->color('danger')
+                                                        ->tooltip('Hapus Gambar')
+                                                        ->action(function (Set $set) {
+                                                            // Set nilai gambar_jawaban menjadi null
+                                                            $set('kunci_gambar', null);
+                                                        })
+                                                )
                                                 ->nullable(),
                                         ])
                                             ->columnSpan(2), // Group ini memakan 2 porsi grid

@@ -22,149 +22,113 @@ class SoalPage extends Page
     protected static string $view = 'filament.app.pages.soal-page';
 
     public $ujianId;
-    public $ujianSiswa;
-    public array $soalIds = [];
-    public $soals = [];
-    public $currentIndex = 0;
-    public $jawabanSiswa = [];
-    public array $raguSiswa = [];
+    public $ujianSiswaId;
+    public $sisaDetik = 0;
 
-    // Helper getter agar data $ujian selalu bisa diakses aman di Livewire & Blade ($this->ujian)
-    public function getUjianProperty()
-    {
-        return Ujian::with(['mapel', 'bankSoal'])->findOrFail($this->ujianId);
-    }
+    // Payload awal untuk di-pass ke LocalStorage
+    public array $payloadSoal = [];
+    public array $initialJawaban = [];
+    public array $initialRagu = [];
 
     public function mount()
     {
         $this->ujianId = request()->query('ujianId');
         $user = Auth::user();
 
-        $this->ujianSiswa = UjianSiswa::where('ujian_id', $this->ujianId)
+        $ujianSiswa = UjianSiswa::where('ujian_id', $this->ujianId)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        if ($this->ujianSiswa->status === 'selesai') {
+        if ($ujianSiswa->status === 'selesai') {
             return redirect()->route('filament.app.pages.ujian-page');
         }
 
-        $ujian = $this->getUjianProperty();
+        $this->ujianSiswaId = $ujianSiswa->id;
+        $ujian = Ujian::findOrFail($this->ujianId);
 
-        // Ambil semua soal terkait bank soal ujian ini
-        $this->soals = Soal::where('bank_soal_id', $ujian->bank_soal_id)->get();
-        $this->soalIds = $this->soals->pluck('id')->toArray();
-        $this->jawabanSiswa = $this->ujianSiswa->jawaban_siswa ?? [];
+        // Hitung Sisa Waktu
+        $waktuSelesai = $ujianSiswa->waktu_selesai_seharusnya ?? $ujianSiswa->waktu_mulai->addMinutes($ujian->durasi_menit);
+        $this->sisaDetik = max(0, now()->diffInSeconds($waktuSelesai, false));
 
-        // Pastikan ragu_siswa selalu ter-decode sebagai array
-        $rawRagu = $this->ujianSiswa->ragu_siswa;
-        $this->raguSiswa = is_array($rawRagu) ? $rawRagu : (json_decode($rawRagu ?? '[]', true) ?? []);
-    }
-
-    //STORE JAWABAN PILIHAN GANDA DAN BENAR SALAH
-    public function simpanJawaban($soalId, $pilihan)
-    {
-        $this->jawabanSiswa[$soalId] = $pilihan;
-        $this->ujianSiswa->update([
-            'jawaban_siswa' => $this->jawabanSiswa,
-        ]);
-    }
-
-    //STORE JAWABAN PILIHAN GANDA KOMPLEKS
-    public function simpanJawabanKompleks($soalId, $pilihan)
-    {
-        $current = $this->jawabanSiswa[$soalId] ?? [];
-        if (!is_array($current)) {
-            $current = array_filter(explode('; ', $current));
+        if ($this->sisaDetik <= 0) {
+            $this->forceSubmit();
+            return;
         }
 
-        if (in_array($pilihan, $current)) {
-            $current = array_diff($current, [$pilihan]);
+        // Ambil soal berdasarkan variasi urutan_soal yang telah ditentukan
+        $urutanIds = $ujianSiswa->urutan_soal ?? [];
+        if (!empty($urutanIds)) {
+            $soalRaw = Soal::whereIn('id', $urutanIds)->get()->keyBy('id');
+            // Urutkan collection sesuai array $urutanIds
+            $soalOrdered = collect($urutanIds)->map(fn($id) => $soalRaw->get($id))->filter();
         } else {
-            $current[] = $pilihan;
+            $soalOrdered = Soal::where('bank_soal_id', $ujian->bank_soal_id)->get();
         }
 
-        $this->jawabanSiswa[$soalId] = array_values($current);
-        $this->ujianSiswa->update([
-            'jawaban_siswa' => $this->jawabanSiswa,
-        ]);
+        // Susun payload ringan tanpa overhead Eloquent
+        $this->payloadSoal = $soalOrdered->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'jenis_soal' => $item->jenis_soal,
+                'pertanyaan' => $item->pertanyaan,
+                'gambar_soal' => $item->gambar_soal,
+                'pilihan_jawaban' => $item->pilihan_jawaban, // Sudah di-cast array
+            ];
+        })->values()->toArray();
+
+        $this->initialJawaban = $ujianSiswa->jawaban_siswa ?? [];
+
+        $rawRagu = $ujianSiswa->ragu_siswa;
+        $this->initialRagu = is_array($rawRagu) ? $rawRagu : (json_decode($rawRagu ?? '[]', true) ?? []);
     }
 
-    /// STORE JAWABAN MENJODOHKAN
-    public function simpanJawabanMenjodohkan($soalId, $kunciKiri, $nilaiPasangan)
+    // Listener Livewire untuk Sinkronisasi Jawaban & Ragu secara background
+    public function syncJawaban($jawaban = [], $ragu = [])
     {
-        // 1. Pastikan array terinisialisasi untuk kunci soal ini
-        if (!isset($this->jawabanSiswa[$soalId]) || !is_array($this->jawabanSiswa[$soalId])) {
-            $this->jawabanSiswa[$soalId] = [];
-        }
+        $jawabanData = is_array($jawaban) ? $jawaban : (array) $jawaban;
+        $raguData = is_array($ragu) ? $ragu : (array) $ragu;
 
-        // 2. Set atau Hapus nilai pasangan
-        if (empty($nilaiPasangan)) {
-            unset($this->jawabanSiswa[$soalId][$kunciKiri]);
-        } else {
-            $this->jawabanSiswa[$soalId][$kunciKiri] = $nilaiPasangan;
-        }
+        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
 
-        // 3. Update ke Database
-        $this->ujianSiswa->jawaban_siswa = $this->jawabanSiswa;
-        $this->ujianSiswa->save();
-    }
-
-    // Method Navigasi dengan Type Hint Integer
-    public function setSoalIndex(int $index): void
-    {
-        $totalSoal = count($this->soalIds);
-
-        // Bounding check: cegah index di luar jangkauan (misal < 0 atau >= totalSoal)
-        if ($index < 0) {
-            $this->currentIndex = 0;
-        } elseif ($index >= $totalSoal) {
-            $this->currentIndex = max(0, $totalSoal - 1);
-        } else {
-            $this->currentIndex = $index;
+        if ($ujianSiswa && $ujianSiswa->status === 'sedang_mengerjakan') {
+            $ujianSiswa->jawaban_siswa = $jawabanData;
+            $ujianSiswa->ragu_siswa = $raguData;
+            $ujianSiswa->save();
         }
     }
 
-    // Helper method untuk navigasi tombol bawah
-    public function nextSoal(): void
+    // Submit Akhir Ujian
+    public function submitFinal($jawaban = [], $ragu = [])
     {
-        $this->setSoalIndex($this->currentIndex + 1);
-    }
+        $jawabanData = is_array($jawaban) ? $jawaban : (array) $jawaban;
+        $raguData = is_array($ragu) ? $ragu : (array) $ragu;
 
-    public function prevSoal(): void
-    {
-        $this->setSoalIndex($this->currentIndex - 1);
-    }
+        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
 
-    public function toggleRagu($soalId)
-    {
-        // Gunakan string key untuk konsistensi di JSON array
-        $key = (string) $soalId;
+        if ($ujianSiswa && $ujianSiswa->status !== 'selesai') {
+            // 1. Simpan jawaban & ragu-ragu terakhir
+            $ujianSiswa->jawaban_siswa = $jawabanData;
+            $ujianSiswa->ragu_siswa = $raguData;
 
-        $currentStatus = $this->raguSiswa[$key] ?? false;
-        $this->raguSiswa[$key] = !$currentStatus;
-
-        // Simpan ke database
-        $this->ujianSiswa->ragu_siswa = $this->raguSiswa;
-        $this->ujianSiswa->save();
-    }
-
-    public function submitUjian()
-    {
-        if ($this->ujianSiswa->status === 'selesai') {
-            return redirect()->route('filament.app.pages.ujian-page');
+            // 2. Set waktu submit & update status ke selesai
+            $ujianSiswa->waktu_submit = now();
+            $ujianSiswa->status = 'selesai';
+            $ujianSiswa->save();
         }
 
-        // Update status pengerjaan siswa
-        $this->ujianSiswa->update([
-            'waktu_submit' => now(),
-            'status'       => 'selesai',
-        ]);
+        // 3. Redirect siswa kembali ke halaman daftar ujian
+        return redirect()->route('filament.app.pages.ujian-page');
+    }
 
-        Notification::make()
-            ->title('Ujian Berhasil Disubmit')
-            ->success()
-            ->send();
-
+    private function forceSubmit()
+    {
+        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
+        if ($ujianSiswa && $ujianSiswa->status !== 'selesai') {
+            $ujianSiswa->update([
+                'waktu_submit' => now(),
+                'status' => 'selesai',
+            ]);
+        }
         return redirect()->route('filament.app.pages.ujian-page');
     }
 }

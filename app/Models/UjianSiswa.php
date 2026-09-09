@@ -17,6 +17,7 @@ class UjianSiswa extends Model
         'status',
         'ragu_siswa',
         'is_rekaped',
+        'urutan_soal',
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class UjianSiswa extends Model
         'waktu_submit' => 'datetime',
         'jawaban_siswa' => 'array',
         'ragu_siswa' => 'array',
+        'urutan_soal' => 'array',
     ];
 
     public function ujian(): BelongsTo

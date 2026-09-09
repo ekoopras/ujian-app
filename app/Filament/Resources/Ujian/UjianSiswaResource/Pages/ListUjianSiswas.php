@@ -8,6 +8,7 @@ use App\Models\TahunAjaran;
 use App\Models\Ujian;
 use App\Models\UjianSiswa;
 use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -21,7 +22,7 @@ class ListUjianSiswas extends ListRecords
     {
         return [
 
-            Actions\Action::make('rekapNilai')
+            Action::make('rekapNilai')
                 ->label('Rekap Semua Nilai Ujian')
                 ->icon('heroicon-o-calculator')
                 ->color('success')
@@ -38,7 +39,6 @@ class ListUjianSiswas extends ListRecords
 
                     $totalBerhasil = 0;
 
-                    // Load Eager Loading untuk efisiensi query
                     UjianSiswa::with(['user', 'ujian.mapel', 'ujian.soals'])
                         ->where('status', 'selesai')
                         ->where('is_rekaped', false)
@@ -52,112 +52,162 @@ class ListUjianSiswas extends ListRecords
                                         return;
                                     }
 
-                                    // Ambil koleksi soal via HasManyThrough
                                     $soals = $ujian->soals;
 
-                                    // Jika soal tidak ditemukan, lewati (jangan ditandai is_rekaped dulu)
                                     if ($soals->isEmpty()) {
                                         return;
                                     }
 
-                                    $jawabanSiswa = $ujianSiswa->jawaban_siswa ?? [];
+                                    // Memastikan jawaban_siswa di-decode dengan benar
+                                    $jawabanSiswa = is_array($ujianSiswa->jawaban_siswa)
+                                        ? $ujianSiswa->jawaban_siswa
+                                        : (json_decode($ujianSiswa->jawaban_siswa ?? '[]', true) ?? []);
 
                                     $totalSoal = count($soals);
                                     $jawabanBenar = 0;
                                     $jawabanSalah = 0;
                                     $bobotDapat = 0;
 
+                                    $labelsMap = ['A', 'B', 'C', 'D', 'E'];
+
                                     foreach ($soals as $soal) {
-                                        $bobotSoal = $soal->bobot_nilai ?? 1;
+                                        $bobotSoal = (float) ($soal->bobot_nilai ?? 1);
                                         $jawaban = $jawabanSiswa[$soal->id] ?? null;
 
-                                        // Pencocokan Jawaban
-                                        $isBenar = false;
-
-                                        if (is_array($jawaban)) {
-                                            if ($soal->jenis_soal === 'pilihan_ganda_kompleks') {
-                                                $pilihanJawaban = is_array($soal->pilihan_jawaban)
-                                                    ? $soal->pilihan_jawaban
-                                                    : json_decode($soal->pilihan_jawaban ?? '[]', true);
-
-                                                if (!empty($jawaban)) {
-                                                    $poinDapatKompleks = 0;
-                                                    $totalPoinMaksimal = 0;
-
-                                                    foreach ($pilihanJawaban as $item) {
-                                                        $teksOpsi = $item['teks'] ?? '';
-                                                        $nilaiOpsi = (int) ($item['nilai'] ?? 0);
-                                                        $isActive = $item['is_active'] ?? false;
-
-                                                        if ($isActive || $nilaiOpsi > 0) {
-                                                            $totalPoinMaksimal += $nilaiOpsi;
-                                                        }
-
-                                                        if (in_array($teksOpsi, $jawaban)) {
-                                                            $poinDapatKompleks += $nilaiOpsi;
-                                                        }
-                                                    }
-
-                                                    $bobotDapat += $poinDapatKompleks;
-
-                                                    if ($poinDapatKompleks >= $totalPoinMaksimal && $totalPoinMaksimal > 0) {
-                                                        $jawabanBenar++;
-                                                    } else {
-                                                        $jawabanSalah++;
-                                                    }
-                                                } else {
-                                                    $jawabanSalah++;
-                                                }
-
-                                                continue;
-                                            } elseif ($soal->jenis_soal === 'menjodohkan') {
-                                                $pilihanJawaban = is_array($soal->pilihan_jawaban)
-                                                    ? $soal->pilihan_jawaban
-                                                    : json_decode($soal->pilihan_jawaban ?? '[]', true);
-
-                                                if (!empty($pilihanJawaban)) {
-                                                    $totalPasangan = count($pilihanJawaban);
-                                                    $jumlahBenarPasangan = 0;
-
-                                                    foreach ($pilihanJawaban as $index => $item) {
-                                                        $keyKiri = $index + 1;
-                                                        $jawabanBenarSeharusnya = $item['nilai_pasangan'] ?? '';
-                                                        $poinPerItem = $item['nilai'] ?? 5;
-                                                        $jawabanSiswaBaris = $jawaban[$keyKiri] ?? null;
-
-                                                        if (!is_null($jawabanSiswaBaris) && trim((string)$jawabanSiswaBaris) === trim((string)$jawabanBenarSeharusnya)) {
-                                                            $jumlahBenarPasangan++;
-                                                            $bobotDapat += $poinPerItem;
-                                                        }
-                                                    }
-
-                                                    if ($jumlahBenarPasangan === $totalPasangan) {
-                                                        $jawabanBenar++;
-                                                    } else {
-                                                        $jawabanSalah++;
-                                                    }
-                                                } else {
-                                                    $jawabanSalah++;
-                                                }
-
-                                                continue;
-                                            }
-                                        } else {
-                                            $isBenar = ($jawaban === $soal->kunci_jawaban);
+                                        // Jika siswa tidak menjawab
+                                        if (is_null($jawaban) || $jawaban === '' || (is_array($jawaban) && empty($jawaban))) {
+                                            $jawabanSalah++;
+                                            continue;
                                         }
 
-                                        if ($isBenar) {
-                                            $jawabanBenar++;
-                                            $bobotDapat += $bobotSoal;
-                                        } else {
-                                            $jawabanSalah++;
+                                        // Normalisasi Array pilihan_jawaban dari DB
+                                        $pilihanJawaban = is_array($soal->pilihan_jawaban)
+                                            ? $soal->pilihan_jawaban
+                                            : (json_decode($soal->pilihan_jawaban ?? '[]', true) ?? []);
+
+                                        $jenisSoal = $soal->jenis_soal ?? 'pilihan_ganda';
+
+                                        // ===============================================
+                                        // 1. PILIHAN GANDA & BENAR / SALAH
+                                        // ===============================================
+                                        if (in_array($jenisSoal, ['pilihan_ganda', 'benar_salah']) || empty($jenisSoal)) {
+                                            $kunci = trim((string) $soal->kunci_jawaban);
+                                            $jawabanUser = trim((string) $jawaban);
+
+                                            $isBenar = false;
+
+                                            // Pengecekan teks / huruf
+                                            if (strcasecmp($jawabanUser, $kunci) === 0) {
+                                                $isBenar = true;
+                                            } else {
+                                                // Pengecekan via index angka / opsi
+                                                $indexJawabanUser = array_search(strtoupper($jawabanUser), $labelsMap);
+                                                if ($indexJawabanUser !== false && (string)$indexJawabanUser === $kunci) {
+                                                    $isBenar = true;
+                                                } else {
+                                                    if ($indexJawabanUser !== false && isset($pilihanJawaban[$indexJawabanUser])) {
+                                                        $itemOpsi = $pilihanJawaban[$indexJawabanUser];
+                                                        $teksOpsi = is_array($itemOpsi) ? ($itemOpsi['teks'] ?? '') : $itemOpsi;
+                                                        if (trim((string)$teksOpsi) === $kunci) {
+                                                            $isBenar = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if ($isBenar) {
+                                                $jawabanBenar++;
+                                                $bobotDapat += $bobotSoal;
+                                            } else {
+                                                $jawabanSalah++;
+                                            }
+                                        }
+
+                                        // ===============================================
+                                        // 2. PILIHAN GANDA KOMPLEKS (Multi-Pilih)
+                                        // ===============================================
+                                        elseif ($jenisSoal === 'pilihan_ganda_kompleks') {
+                                            $jawabanUserArr = is_array($jawaban) ? $jawaban : [$jawaban];
+                                            $poinDapatKompleks = 0;
+
+                                            foreach (array_values($pilihanJawaban) as $idx => $item) {
+                                                $labelOpsi = $labelsMap[$idx] ?? (string)$idx;
+                                                $teksOpsi = $item['teks'] ?? '';
+                                                $nilaiOpsi = (float) ($item['nilai'] ?? 0);
+
+                                                if (in_array($labelOpsi, $jawabanUserArr) || in_array($teksOpsi, $jawabanUserArr)) {
+                                                    $poinDapatKompleks += $nilaiOpsi;
+                                                }
+                                            }
+
+                                            $bobotDapat += $poinDapatKompleks;
+
+                                            if ($poinDapatKompleks > 0) {
+                                                $jawabanBenar++;
+                                            } else {
+                                                $jawabanSalah++;
+                                            }
+                                        }
+
+                                        // ===============================================
+                                        // 3. MENJODOHKAN
+                                        // (Sesuai Repeater: 'kunci', 'nilai_pasangan', 'nilai')
+                                        // ===============================================
+                                        elseif ($jenisSoal === 'menjodohkan') {
+                                            $totalPasangan = count($pilihanJawaban);
+                                            $jumlahBenarPasangan = 0;
+                                            $poinMenjodohkan = 0;
+
+                                            if (is_array($jawaban) && $totalPasangan > 0) {
+                                                // Mapping kunci & nilai dari repeater DB
+                                                $mapKunciJawaban = [];
+                                                foreach ($pilihanJawaban as $item) {
+                                                    $sisiKiri = strtolower(trim((string) ($item['kunci'] ?? '')));
+                                                    $sisiKanan = strtolower(trim((string) ($item['nilai_pasangan'] ?? '')));
+                                                    $poinItem = isset($item['nilai']) && (float)$item['nilai'] > 0
+                                                        ? (float)$item['nilai']
+                                                        : ($bobotSoal / $totalPasangan);
+
+                                                    if ($sisiKiri !== '') {
+                                                        $mapKunciJawaban[$sisiKiri] = [
+                                                            'pasangan' => $sisiKanan,
+                                                            'nilai'    => $poinItem,
+                                                        ];
+                                                    }
+                                                }
+
+                                                // Evaluasi jawaban yang diisi oleh siswa
+                                                foreach ($jawaban as $inputKiriSiswa => $inputKananSiswa) {
+                                                    $keyKiri = strtolower(trim((string) $inputKiriSiswa));
+                                                    $valKananSiswa = strtolower(trim((string) $inputKananSiswa));
+
+                                                    if (isset($mapKunciJawaban[$keyKiri])) {
+                                                        $targetKanan = $mapKunciJawaban[$keyKiri]['pasangan'];
+                                                        $poin = $mapKunciJawaban[$keyKiri]['nilai'];
+
+                                                        if ($valKananSiswa !== '' && $valKananSiswa === $targetKanan) {
+                                                            $jumlahBenarPasangan++;
+                                                            $poinMenjodohkan += $poin;
+                                                        }
+                                                    }
+                                                }
+
+                                                $bobotDapat += $poinMenjodohkan;
+
+                                                if ($jumlahBenarPasangan === $totalPasangan) {
+                                                    $jawabanBenar++;
+                                                } else {
+                                                    $jawabanSalah++;
+                                                }
+                                            } else {
+                                                $jawabanSalah++;
+                                            }
                                         }
                                     }
 
                                     $nilaiAkhir = $bobotDapat;
                                     $namaKelas = $user->kelase->name ?? $user->kelas->name ?? $user->kelas->nama_kelas ?? '-';
 
-                                    // Simpan Nilai ke RekapNilai
                                     RekapNilai::updateOrCreate(
                                         [
                                             'ujian_id' => $ujian->id,
@@ -176,7 +226,6 @@ class ListUjianSiswas extends ListRecords
                                         ]
                                     );
 
-                                    // Tandai data UjianSiswa ini sudah direkap
                                     $ujianSiswa->update(['is_rekaped' => true]);
                                     $totalBerhasil++;
                                 });
@@ -196,7 +245,7 @@ class ListUjianSiswas extends ListRecords
                             ->warning()
                             ->send();
                     }
-                }),
+                })
 
         ];
     }
