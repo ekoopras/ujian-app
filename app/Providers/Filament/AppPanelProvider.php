@@ -37,6 +37,18 @@ class AppPanelProvider extends PanelProvider
         FilamentView::registerRenderHook(
             PanelsRenderHook::HEAD_END,
             fn(): string => '
+                <meta name="google" content="notranslate" />
+                <script>
+                    // Menambahkan atribut translate="no" dan class "notranslate" ke elemen <html> & <body>
+                    document.documentElement.setAttribute("translate", "no");
+                    document.documentElement.classList.add("notranslate");
+                    document.addEventListener("DOMContentLoaded", function() {
+                        if (document.body) {
+                            document.body.setAttribute("translate", "no");
+                            document.body.classList.add("notranslate");
+                        }
+                    });
+                </script>
                 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
                 <script>
                     tailwind.config = {

@@ -167,17 +167,18 @@ class UjianResource extends Resource
                     ->label('')
                     ->color('success')
                     ->modalHeading('Edit Ujian'),
-                Tables\Actions\DeleteAction::make()
-                    ->button()
-                    ->label('')
-                    ->color('danger')
-                    ->modalHeading('Hapus Ujian'),
+                // Tables\Actions\DeleteAction::make()
+                //     ->button()
+                //     ->label('')
+                //     ->color('danger')
+                //     ->modalHeading('Hapus Ujian'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            // ->bulkActions([
+            //     Tables\Actions\BulkActionGroup::make([
+            //         Tables\Actions\DeleteBulkAction::make(),
+            //     ]),
+            // ])
+        ;
     }
 
     public static function getRelations(): array

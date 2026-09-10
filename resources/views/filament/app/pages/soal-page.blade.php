@@ -20,6 +20,9 @@
 
     </div>
 
+    <!-- 4. Scurity -->
+    @include('filament.app.pages.components.soal.security')
+
     <!-- Script Alpine JS Kompatibel Android 9 -->
     <script>
         document.addEventListener('alpine:init', function() {

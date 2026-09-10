@@ -9,6 +9,8 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -86,9 +88,66 @@ class UjianSiswaResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success'),
             ])
+            ->defaultPaginationPageOption(30) // Set default awal ke 10 data
+            ->paginationPageOptions([30])
             ->filters([
-                //
-            ])
+                // 1. Filter Kelas (via relasi user.kelase)
+                SelectFilter::make('kelas_id')
+                    ->label('Kelas')
+                    ->options(
+                        fn() => \App\Models\Kelase::pluck('name', 'id')->toArray()
+                    )
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn(Builder $q, $value) => $q->whereHas(
+                                'user',
+                                fn(Builder $uq) => $uq->where('kelase_id', $value)
+                            )
+                        );
+                    })
+                    ->searchable(),
+
+                // 2. Filter Mata Pelajaran (langsung via mapel_id di UjianSiswa)
+                SelectFilter::make('mapel_id')
+                    ->label('Mata Pelajaran')
+                    ->options(
+                        fn() => \App\Models\Mapel::pluck('name', 'id')->toArray()
+                    )
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn(Builder $q, $value) => $q->whereHas(
+                                'ujian',
+                                fn(Builder $uq) => $uq->where('mapel_id', $value)
+                            )
+                        );
+                    })
+                    ->searchable(),
+
+                // 3. Filter Nomor Absen (via relasi user)
+                SelectFilter::make('nomor_absen')
+                    ->label('Nomor Absen')
+                    ->options(
+                        fn() => \App\Models\User::query()
+                            ->whereNotNull('nomor_absen')
+                            ->distinct()
+                            ->orderBy('nomor_absen')
+                            ->pluck('nomor_absen', 'nomor_absen')
+                            ->toArray()
+                    )
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn(Builder $q, $value) => $q->whereHas(
+                                'user',
+                                fn(Builder $uq) => $uq->where('nomor_absen', $value)
+                            )
+                        );
+                    })
+                    ->searchable(),
+            ], layout: FiltersLayout::AboveContent)
+            ->filtersFormColumns(3)
             ->actions([
                 Tables\Actions\DeleteAction::make()
                     ->button()
