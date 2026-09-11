@@ -7,6 +7,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['web'])
-    ->get('/app/register', RegisterSiswa::class)
-    ->name('filament.app.auth.register');
+// Route::middleware(['web'])
+//     ->get('/app/register', RegisterSiswa::class)
+//     ->name('filament.app.auth.register');

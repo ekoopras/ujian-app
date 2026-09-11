@@ -18,6 +18,8 @@ class UjianSiswa extends Model
         'ragu_siswa',
         'is_rekaped',
         'urutan_soal',
+        'jumlah_pelanggaran',
+        'is_locked',
     ];
 
     protected $casts = [
@@ -27,6 +29,7 @@ class UjianSiswa extends Model
         'jawaban_siswa' => 'array',
         'ragu_siswa' => 'array',
         'urutan_soal' => 'array',
+        'is_locked' => 'boolean',
     ];
 
     public function ujian(): BelongsTo

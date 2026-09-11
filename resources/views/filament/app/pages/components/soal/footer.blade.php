@@ -40,3 +40,34 @@
 
     </div>
 </div>
+
+<!-- TAMBAHAN: MODAL KONFIRMASI SUBMIT UJIAN (Bebas dari Event Blur Browser) -->
+<template x-if="showSubmitModal">
+    <div class="fixed inset-0 z-[95] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 text-slate-800 dark:text-white p-6 rounded-2xl shadow-xl text-center max-w-md w-full border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in duration-150">
+            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <x-heroicon-o-check-circle class="w-8 h-8 text-emerald-500" />
+            </div>
+
+            <h4 class="text-lg font-bold">Kumpulkan Jawaban Ujian?</h4>
+            <p class="text-sm mt-1 text-slate-600 dark:text-slate-300">
+                Apakah kamu yakin ingin menyelesaikan dan mengumpulkan ujian ini? Jawaban tidak dapat diubah setelah dikumpulkan.
+            </p>
+
+            <div class="flex gap-3 mt-6">
+                <button
+                    type="button"
+                    @click="showSubmitModal = false"
+                    class="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-sm transition-all">
+                    Batal
+                </button>
+                <button
+                    type="button"
+                    @click="submitFinal()"
+                    class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md active:scale-95">
+                    Ya, Kumpulkan
+                </button>
+            </div>
+        </div>
+    </div>
+</template>

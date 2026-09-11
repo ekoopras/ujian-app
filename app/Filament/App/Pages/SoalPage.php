@@ -25,6 +25,12 @@ class SoalPage extends Page
     public $ujianSiswaId;
     public $sisaDetik = 0;
 
+    // Properti Keamanan Ujian
+    public bool $isLocked = false;
+    public int $jumlahPelanggaran = 0;
+    public string $pinInput = '';
+    public ?string $pinErrorMessage = null;
+
     // Payload awal untuk di-pass ke LocalStorage
     public array $payloadSoal = [];
     public array $initialJawaban = [];
@@ -44,6 +50,11 @@ class SoalPage extends Page
         }
 
         $this->ujianSiswaId = $ujianSiswa->id;
+
+        // Load status keamanan saat pertama kali dimuat
+        $this->isLocked = (bool) $ujianSiswa->is_locked;
+        $this->jumlahPelanggaran = (int) $ujianSiswa->jumlah_pelanggaran;
+
         $ujian = Ujian::findOrFail($this->ujianId);
 
         // Hitung Sisa Waktu
@@ -80,6 +91,66 @@ class SoalPage extends Page
 
         $rawRagu = $ujianSiswa->ragu_siswa;
         $this->initialRagu = is_array($rawRagu) ? $rawRagu : (json_decode($rawRagu ?? '[]', true) ?? []);
+    }
+
+    // Livewire Method: Catat Pelanggaran dari JavaScript
+    public function catatPelanggaran()
+    {
+        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
+
+        if (!$ujianSiswa || $ujianSiswa->is_locked) {
+            return;
+        }
+
+        $ujianSiswa->increment('jumlah_pelanggaran');
+
+        if ($ujianSiswa->jumlah_pelanggaran >= 3) {
+            $ujianSiswa->update([
+                'is_locked' => true,
+            ]);
+        }
+
+        $ujianSiswa->refresh();
+
+        $this->jumlahPelanggaran = $ujianSiswa->jumlah_pelanggaran;
+        $this->isLocked = (bool) $ujianSiswa->is_locked;
+    }
+
+    // Livewire Method: Dipanggil polling JS untuk cek apakah guru sudah membuka kuncian
+    public function checkLockStatus()
+    {
+        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
+
+        if ($ujianSiswa) {
+            $this->isLocked = (bool) $ujianSiswa->is_locked;
+            $this->jumlahPelanggaran = (int) $ujianSiswa->jumlah_pelanggaran;
+        }
+    }
+
+    // Livewire Method: Verifikasi PIN 6 Digit untuk Buka Kunci
+    public function unlockWithPin()
+    {
+        // Mengambil PIN dari .env melalui config
+        $pinValid = config('app.pin_pengawas', '123456');
+
+        if ($this->pinInput === $pinValid) {
+            $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
+
+            if ($ujianSiswa) {
+                $ujianSiswa->update([
+                    'is_locked' => false,
+                    'jumlah_pelanggaran' => 0,
+                ]);
+
+                $this->isLocked = false;
+                $this->jumlahPelanggaran = 0;
+                $this->pinInput = '';
+                $this->pinErrorMessage = null;
+            }
+        } else {
+            $this->pinErrorMessage = 'Kode PIN Pengawas Salah!';
+            $this->pinInput = '';
+        }
     }
 
     // Listener Livewire untuk Sinkronisasi Jawaban & Ragu secara background

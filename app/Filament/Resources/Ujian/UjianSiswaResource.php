@@ -67,6 +67,10 @@ class UjianSiswaResource extends Resource
                 //     ->dateTime('H:i:s')
                 //     ->sortable(),
 
+                Tables\Columns\TextColumn::make('jumlah_pelanggaran')
+                    ->label('Pelanggaran')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('waktu_submit')
                     ->label('Submit')
                     ->dateTime('H:i:s')

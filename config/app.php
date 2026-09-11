@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'pin_pengawas' => env('PIN_PENGAWAS', '123456'),
+
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
+
 ];

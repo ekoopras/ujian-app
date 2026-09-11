@@ -39,6 +39,9 @@
                     timer: null,
                     syncInterval: null,
 
+                    // TAMBAHAN: State Modal Submit
+                    showSubmitModal: false,
+
                     initApp: function() {
                         var storageKey = 'ujian_data_' + this.ujianSiswaId;
                         var cachedData = localStorage.getItem(storageKey);
@@ -238,13 +241,14 @@
                         this.$wire.syncJawaban(rawJawaban, rawRagu);
                     },
 
+                    // UBAH: Buka Modal HTML alih-alih confirm() browser yang memicu event blur/pelanggaran
                     confirmSubmit: function() {
-                        if (confirm('Apakah Anda yakin ingin menyelesaikan ujian ini?')) {
-                            this.submitFinal();
-                        }
+                        this.showSubmitModal = true;
                     },
 
                     submitFinal: function() {
+                        this.showSubmitModal = false;
+
                         clearInterval(this.timer);
                         clearInterval(this.syncInterval);
 
