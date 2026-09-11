@@ -33,6 +33,8 @@ class UjianAppPanelProvider extends PanelProvider
             ->breadcrumbs(false)
             ->login()
             //logo
+            ->brandLogo(asset('ico.jpeg'))
+            ->brandLogoHeight('4rem')
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn(): string => Blade::render('

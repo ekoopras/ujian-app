@@ -41,7 +41,7 @@ class RegisterSiswa extends BaseRegister
                 Select::make('nomor_absen')
                     ->label('Nomor Absen')
                     ->options(
-                        collect(range(1, 30))
+                        collect(range(1, 35))
                             ->mapWithKeys(fn($number) => [
                                 sprintf('%02d', $number) => sprintf('%02d', $number)
                             ])
