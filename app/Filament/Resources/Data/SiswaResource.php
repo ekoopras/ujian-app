@@ -103,8 +103,8 @@ class SiswaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Tanggal Terdaftar'),
             ])
-            ->defaultPaginationPageOption(30) // Set default awal ke 10 data
-            ->paginationPageOptions([30])
+            ->defaultPaginationPageOption(32) // Set default awal ke 10 data
+            ->paginationPageOptions([32])
             ->filters([
                 SelectFilter::make('kelase_id')
                     ->label('Select Kelas')
