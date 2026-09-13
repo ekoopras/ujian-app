@@ -7,6 +7,10 @@ use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Table;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Forms\Components\FileUpload;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\SiswaImport;
+use Illuminate\Support\Facades\Storage;
 
 class ListSiswas extends ListRecords
 {
@@ -38,7 +42,33 @@ class ListSiswas extends ListRecords
                     // Mengunduh langsung file PDF di browser pengguna
                     return response()->streamDownload(function () use ($pdf) {
                         echo $pdf->output();
-                    }, 'Daftar_Email_Siswa_' . now()->format('Ymd_His') . '.pdf');
+                    }, 'AKUN-' . \Illuminate\Support\Str::replace(['kelas', '-', ' '], '', \Illuminate\Support\Str::upper($records->first()?->kelase?->name ?? 'SEMUA')) . '.pdf');
+                }),
+
+            Actions\Action::make('importExcel')
+                ->label('Import Siswa Excel')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('warning')
+                ->form([
+                    FileUpload::make('file_excel')
+                        ->label('Pilih File Excel (.xlsx / .csv)')
+                        ->required()
+                        ->disk('local') // Tetap gunakan disk local
+                        ->directory('temp-imports')
+                ])
+                ->action(function (array $data) {
+                    // PERBAIKAN: Gunakan Storage::disk('local')->path() agar jalurnya dibaca absolut oleh MAMP/Server
+                    $filePath = Storage::disk('local')->path($data['file_excel']);
+
+                    // Eksekusi proses import data menggunakan path yang sudah valid
+                    Excel::import(new SiswaImport, $filePath);
+
+                    // Tampilkan notifikasi sukses
+                    \Filament\Notifications\Notification::make()
+                        ->title('Proses Import Selesai')
+                        ->body('Data siswa dari Excel berhasil diproses ke database.')
+                        ->success()
+                        ->send();
                 }),
         ];
     }
