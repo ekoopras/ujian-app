@@ -159,13 +159,13 @@ class SoalPage extends Page
         $jawabanData = is_array($jawaban) ? $jawaban : (array) $jawaban;
         $raguData = is_array($ragu) ? $ragu : (array) $ragu;
 
-        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
-
-        if ($ujianSiswa && $ujianSiswa->status === 'sedang_mengerjakan') {
-            $ujianSiswa->jawaban_siswa = $jawabanData;
-            $ujianSiswa->ragu_siswa = $raguData;
-            $ujianSiswa->save();
-        }
+        UjianSiswa::where('id', $this->ujianSiswaId)
+            ->where('status', 'sedang_mengerjakan')
+            ->update([
+                'jawaban_siswa' => json_encode($jawabanData),
+                'ragu_siswa' => json_encode($raguData),
+                'updated_at' => now(),
+            ]);
     }
 
     // Submit Akhir Ujian
@@ -174,32 +174,30 @@ class SoalPage extends Page
         $jawabanData = is_array($jawaban) ? $jawaban : (array) $jawaban;
         $raguData = is_array($ragu) ? $ragu : (array) $ragu;
 
-        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
+        // Direct Update: 1 Query SQL saja, tanpa SELECT & tanpa Eloquent Model
+        UjianSiswa::where('id', $this->ujianSiswaId)
+            ->where('status', '!=', 'selesai')
+            ->update([
+                'jawaban_siswa' => json_encode($jawabanData),
+                'ragu_siswa'    => json_encode($raguData),
+                'waktu_submit'  => now(),
+                'status'        => 'selesai',
+                'updated_at'    => now(),
+            ]);
 
-        if ($ujianSiswa && $ujianSiswa->status !== 'selesai') {
-            // 1. Simpan jawaban & ragu-ragu terakhir
-            $ujianSiswa->jawaban_siswa = $jawabanData;
-            $ujianSiswa->ragu_siswa = $raguData;
-
-            // 2. Set waktu submit & update status ke selesai
-            $ujianSiswa->waktu_submit = now();
-            $ujianSiswa->status = 'selesai';
-            $ujianSiswa->save();
-        }
-
-        // 3. Redirect siswa kembali ke halaman daftar ujian
         return redirect()->route('filament.app.pages.ujian-page');
     }
 
     private function forceSubmit()
     {
-        $ujianSiswa = UjianSiswa::find($this->ujianSiswaId);
-        if ($ujianSiswa && $ujianSiswa->status !== 'selesai') {
-            $ujianSiswa->update([
+        UjianSiswa::where('id', $this->ujianSiswaId)
+            ->where('status', '!=', 'selesai')
+            ->update([
                 'waktu_submit' => now(),
-                'status' => 'selesai',
+                'status'       => 'selesai',
+                'updated_at'   => now(),
             ]);
-        }
+
         return redirect()->route('filament.app.pages.ujian-page');
     }
 }

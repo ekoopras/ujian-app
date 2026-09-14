@@ -38,8 +38,8 @@
                     formattedTime: '00:00:00',
                     timer: null,
                     syncInterval: null,
+                    lastSyncedState: '',
 
-                    // TAMBAHAN: State Modal Submit
                     showSubmitModal: false,
 
                     initApp: function() {
@@ -67,7 +67,7 @@
                         }
 
                         this.startTimer();
-                        this.startAutoSync();
+                        this.startStaggeredAutoSync();
                         this.saveToStorage();
                     },
 
@@ -90,47 +90,40 @@
                         localStorage.setItem(storageKey, JSON.stringify(payload));
                     },
 
-                    // Single Select (Pilihan Ganda Biasa)
                     pilihJawaban: function(soalId, val) {
                         this.jawabanSiswa[soalId] = val;
                         this.saveToStorage();
                     },
 
-                    // Multi Select (Pilihan Ganda Kompleks)
+                    // DISESUAIKAN UNTUK ANDROID 9 (Menggunakan var)
                     toggleJawabanKompleks: function(soalId, huruf) {
                         if (!Array.isArray(this.jawabanSiswa[soalId])) {
                             this.jawabanSiswa[soalId] = [];
                         }
 
-                        let index = this.jawabanSiswa[soalId].indexOf(huruf);
-                        if (index > -1) {
-                            this.jawabanSiswa[soalId].splice(index, 1);
+                        var idx = this.jawabanSiswa[soalId].indexOf(huruf);
+                        if (idx > -1) {
+                            this.jawabanSiswa[soalId].splice(idx, 1);
                         } else {
                             this.jawabanSiswa[soalId].push(huruf);
                         }
 
-                        this.jawabanSiswa[soalId] = [...this.jawabanSiswa[soalId]];
-                        this.saveToStorage(); // <-- TAMBAHAN: Autosave ke LocalStorage
+                        this.jawabanSiswa[soalId] = this.jawabanSiswa[soalId].slice();
+                        this.saveToStorage();
                     },
 
-                    // PERBAIKAN: Simpan & Hapus Jawaban Menjodohkan
                     simpanMenjodohkan: function(soalId, kunciKiri, nilaiKanan) {
-                        // 1. Pastikan terinisialisasi sebagai object
                         if (!this.jawabanSiswa[soalId] || typeof this.jawabanSiswa[soalId] !== 'object' || Array.isArray(this.jawabanSiswa[soalId])) {
                             this.jawabanSiswa[soalId] = {};
                         }
 
-                        // 2. Set atau hapus jawaban
                         if (nilaiKanan === '' || nilaiKanan === null) {
                             delete this.jawabanSiswa[soalId][kunciKiri];
                         } else {
                             this.jawabanSiswa[soalId][kunciKiri] = nilaiKanan;
                         }
 
-                        // 3. Paksa Alpine mendeteksi perubahan Object
                         this.jawabanSiswa[soalId] = Object.assign({}, this.jawabanSiswa[soalId]);
-
-                        // 4. SIMPAN KE LOCAL STORAGE
                         this.saveToStorage();
                     },
 
@@ -153,7 +146,6 @@
                     jumpTo: function(idx) {
                         this.currentIndex = idx;
                         this.currentSoal = this.soals[idx];
-                        this.syncToDatabase();
                     },
 
                     nextSoal: function() {
@@ -168,22 +160,16 @@
                         }
                     },
 
-                    // PERBAIKAN: Pengecekan Status Terjawab (Mendukung Object Menjodohkan & Array PG Kompleks)
                     isAnswered: function(soalId) {
                         var jwb = this.jawabanSiswa[soalId];
                         if (typeof jwb === 'undefined' || jwb === null) return false;
 
-                        // Jika tipe PG Kompleks (Array)
                         if (Array.isArray(jwb)) return jwb.length > 0;
-
-                        // Jika tipe Menjodohkan (Object)
                         if (typeof jwb === 'object') return Object.keys(jwb).length > 0;
 
-                        // Jika tipe PG Biasa / Essay (String/Number)
                         return String(jwb).trim() !== '';
                     },
 
-                    // PERBAIKAN: Style Grid Tombol Nomor Soal
                     getGridStyle: function(soalId, idx) {
                         var isCurrent = this.currentIndex === idx;
                         var isTerjawab = this.isAnswered(soalId);
@@ -227,21 +213,37 @@
                         this.formattedTime = pad(jam) + ':' + pad(menit) + ':' + pad(detik);
                     },
 
-                    startAutoSync: function() {
+                    startStaggeredAutoSync: function() {
                         var self = this;
-                        this.syncInterval = setInterval(function() {
+                        var slotDetik = (this.ujianSiswaId % 14);
+                        var initialDelay = slotDetik * 1000;
+
+                        setTimeout(function() {
                             self.syncToDatabase();
-                        }, 30000);
+
+                            self.syncInterval = setInterval(function() {
+                                self.syncToDatabase();
+                            }, 14000);
+                        }, initialDelay);
                     },
 
                     syncToDatabase: function() {
+                        var currentState = JSON.stringify({
+                            j: this.jawabanSiswa,
+                            r: this.raguSiswa
+                        });
+
+                        if (currentState === this.lastSyncedState) {
+                            return;
+                        }
+
                         var rawJawaban = JSON.parse(JSON.stringify(this.jawabanSiswa));
                         var rawRagu = JSON.parse(JSON.stringify(this.raguSiswa));
 
+                        this.lastSyncedState = currentState;
                         this.$wire.syncJawaban(rawJawaban, rawRagu);
                     },
 
-                    // UBAH: Buka Modal HTML alih-alih confirm() browser yang memicu event blur/pelanggaran
                     confirmSubmit: function() {
                         this.showSubmitModal = true;
                     },
@@ -250,7 +252,7 @@
                         this.showSubmitModal = false;
 
                         clearInterval(this.timer);
-                        clearInterval(this.syncInterval);
+                        if (this.syncInterval) clearInterval(this.syncInterval);
 
                         var rawJawaban = JSON.parse(JSON.stringify(this.jawabanSiswa));
                         var rawRagu = JSON.parse(JSON.stringify(this.raguSiswa));
